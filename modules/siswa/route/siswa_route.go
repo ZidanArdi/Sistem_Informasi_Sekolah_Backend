@@ -1,22 +1,23 @@
 package route
 
 import (
+	"backend/middleware"
 	"backend/modules/siswa/handler"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SiswaRoute(app *fiber.App) {
+func SiswaRoute(app fiber.Router) {
 
-	siswa := app.Group("/api/siswa")
+	siswa := app.Group("/siswa")
 
 	siswa.Get("/", handler.GetAllSiswa)
 
 	siswa.Get("/:id", handler.GetSiswaByID)
 
-	siswa.Post("/", handler.CreateSiswa)
+	siswa.Post("/", middleware.JWTProtected, handler.CreateSiswa)
 
-	siswa.Put("/:id", handler.UpdateSiswa)
+	siswa.Put("/:id", middleware.JWTProtected, handler.UpdateSiswa)
 
-	siswa.Delete("/:id", handler.DeleteSiswa)
+	siswa.Delete("/:id", middleware.JWTProtected, middleware.RequireAdmin, handler.DeleteSiswa)
 }

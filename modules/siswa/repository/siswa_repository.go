@@ -3,18 +3,25 @@ package repository
 import (
 	"backend/config"
 	"backend/modules/siswa/model"
+	"strconv"
 
 	"gorm.io/gorm"
 )
 
-func GetAllSiswa(search string) ([]model.Siswa, error) {
+func GetAllSiswa(search string, kelasID string) ([]model.Siswa, error) {
 
 	var siswa []model.Siswa
 
-	query := config.DB
+	query := config.DB.Preload("Kelas").Preload("Kelas.WaliKelas")
 
 	if search != "" {
-		query = query.Where("nama ILIKE ?", "%"+search+"%")
+		query = query.Where("nama ILIKE ? OR nis ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+	if kelasID != "" {
+		if parsedKelasID, err := strconv.Atoi(kelasID); err == nil {
+			query = query.Where("kelas_id = ?", parsedKelasID)
+		}
 	}
 
 	result := query.Find(&siswa)
@@ -22,11 +29,11 @@ func GetAllSiswa(search string) ([]model.Siswa, error) {
 	return siswa, result.Error
 }
 
-func GetSiswaByID(id string) (model.Siswa, error) {
+func GetSiswaByID(id uint) (model.Siswa, error) {
 
 	var siswa model.Siswa
 
-	result := config.DB.Where("nis = ?", id).First(&siswa)
+	result := config.DB.Preload("Kelas").Preload("Kelas.WaliKelas").First(&siswa, id)
 
 	return siswa, result.Error
 }
@@ -38,31 +45,38 @@ func CreateSiswa(data model.Siswa) (model.Siswa, error) {
 	return data, result.Error
 }
 
-func UpdateSiswa(id string, data model.Siswa) (model.Siswa, error) {
+func UpdateSiswa(id uint, data model.Siswa) (model.Siswa, error) {
 
 	var siswa model.Siswa
 
-	err := config.DB.Where("nis = ?", id).First(&siswa).Error
+	err := config.DB.First(&siswa, id).Error
 
 	if err != nil {
 		return siswa, err
 	}
 
+	siswa.NIS = data.NIS
 	siswa.Nama = data.Nama
-	siswa.Kelas = data.Kelas
+	siswa.JenisKelamin = data.JenisKelamin
+	siswa.TempatLahir = data.TempatLahir
+	siswa.TanggalLahir = data.TanggalLahir
 	siswa.Alamat = data.Alamat
-	siswa.Email = data.Email
+	siswa.KelasID = data.KelasID
 
-	config.DB.Save(&siswa)
+	if err := config.DB.Save(&siswa).Error; err != nil {
+		return siswa, err
+	}
+
+	config.DB.Preload("Kelas").Preload("Kelas.WaliKelas").First(&siswa, siswa.ID)
 
 	return siswa, nil
 }
 
-func DeleteSiswa(id string) error {
+func DeleteSiswa(id uint) error {
 
 	var siswa model.Siswa
 
-	err := config.DB.Where("nis = ?", id).First(&siswa).Error
+	err := config.DB.First(&siswa, id).Error
 
 	if err != nil {
 		return err
@@ -75,11 +89,11 @@ func IsNotFoundError(err error) bool {
 	return err == gorm.ErrRecordNotFound
 }
 
-func CheckEmailExists(email string, excludeNIS string) bool {
+func CheckNISExists(nis string, excludeID uint) bool {
 	var count int64
-	query := config.DB.Model(&model.Siswa{}).Where("email = ?", email)
-	if excludeNIS != "" {
-		query = query.Where("nis != ?", excludeNIS)
+	query := config.DB.Model(&model.Siswa{}).Where("nis = ?", nis)
+	if excludeID != 0 {
+		query = query.Where("id != ?", excludeID)
 	}
 	query.Count(&count)
 	return count > 0
