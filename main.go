@@ -12,6 +12,7 @@ import (
 	mapelRoute "backend/modules/mapel/route"
 	nilaiRoute "backend/modules/nilai/route"
 	siswaRoute "backend/modules/siswa/route"
+	absensiRoute "backend/modules/absensi/route"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -34,6 +35,7 @@ func main() {
 
 	publicAPI := app.Group("/api")
 	siswaRoute.SiswaRoute(publicAPI)
+	absensiRoute.AbsensiRoute(publicAPI)
 
 	api := app.Group("/api", middleware.JWTProtected)
 	guruRoute.GuruRoute(api)

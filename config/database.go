@@ -11,6 +11,7 @@ import (
 	mapelModel "backend/modules/mapel/model"
 	nilaiModel "backend/modules/nilai/model"
 	siswaModel "backend/modules/siswa/model"
+	absensiModel "backend/modules/absensi/model"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -51,6 +52,7 @@ func ConnectDB() {
 		&mapelModel.Mapel{},
 		&jadwalModel.Jadwal{},
 		&nilaiModel.Nilai{},
+		&absensiModel.Absensi{},
 	)
 	if err != nil {
 		log.Fatal("Gagal menjalankan auto migrate")

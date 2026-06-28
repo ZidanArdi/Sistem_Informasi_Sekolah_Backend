@@ -47,8 +47,13 @@ func validateSiswa(data model.Siswa) error {
 		strings.TrimSpace(data.TempatLahir) == "" ||
 		strings.TrimSpace(data.TanggalLahir) == "" ||
 		strings.TrimSpace(data.Alamat) == "" ||
+		strings.TrimSpace(data.Email) == "" ||
 		data.KelasID == 0 {
-		return errors.New("nis, nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, dan kelas_id wajib diisi")
+		return errors.New("nis, nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, email, dan kelas_id wajib diisi")
+	}
+
+	if !strings.Contains(data.Email, "@") {
+		return errors.New("format email siswa tidak valid")
 	}
 
 	return nil

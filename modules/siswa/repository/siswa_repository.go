@@ -61,6 +61,7 @@ func UpdateSiswa(id uint, data model.Siswa) (model.Siswa, error) {
 	siswa.TempatLahir = data.TempatLahir
 	siswa.TanggalLahir = data.TanggalLahir
 	siswa.Alamat = data.Alamat
+	siswa.Email = data.Email
 	siswa.KelasID = data.KelasID
 
 	if err := config.DB.Save(&siswa).Error; err != nil {

@@ -16,6 +16,7 @@ type Siswa struct {
 	TempatLahir  string           `gorm:"type:varchar(80)" json:"tempat_lahir"`
 	TanggalLahir string           `gorm:"type:date" json:"tanggal_lahir"`
 	Alamat       string           `gorm:"type:text;not null" json:"alamat"`
+	Email        string           `gorm:"type:varchar(120);uniqueIndex" json:"email"`
 	KelasID      uint             `json:"kelas_id"`
 	Kelas        kelasModel.Kelas `gorm:"foreignKey:KelasID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kelas,omitempty"`
 	CreatedAt    time.Time        `json:"created_at"`
