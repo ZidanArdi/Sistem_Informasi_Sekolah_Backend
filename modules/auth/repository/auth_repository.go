@@ -25,7 +25,19 @@ func GetUserByID(id uint) (model.User, error) {
 }
 
 func UpdatePassword(id uint, password string) error {
-	return config.DB.Model(&model.User{}).Where("id = ?", id).Update("password", password).Error
+	return config.DB.Model(&model.User{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"password":       password,
+		"is_first_login": false,
+	}).Error
+}
+
+func GetUserIDByNIS(nis string) (uint, string, error) {
+	var result struct {
+		UserID uint   `gorm:"column:user_id"`
+		Email  string `gorm:"column:email"`
+	}
+	err := config.DB.Table("siswas").Select("user_id, email").Where("nis = ? AND deleted_at IS NULL", nis).First(&result).Error
+	return result.UserID, result.Email, err
 }
 
 func EmailExists(email string) bool {

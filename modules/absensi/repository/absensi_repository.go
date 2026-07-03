@@ -3,6 +3,7 @@ package repository
 import (
 	"backend/config"
 	"backend/modules/absensi/model"
+	siswaModel "backend/modules/siswa/model"
 	"strconv"
 
 	"gorm.io/gorm"
@@ -95,10 +96,8 @@ func BulkSaveAbsensi(records []model.Absensi) error {
 }
 
 func GetSiswaIDByEmail(email string) (uint, error) {
-	var siswa struct {
-		ID uint
-	}
-	err := config.DB.Table("siswa").Select("id").Where("email = ? AND deleted_at IS NULL", email).First(&siswa).Error
+	var siswa siswaModel.Siswa
+	err := config.DB.Select("id").Where("nis = ?", email).First(&siswa).Error
 	if err != nil {
 		return 0, err
 	}

@@ -13,11 +13,11 @@ func SiswaRoute(app fiber.Router) {
 
 	siswa.Get("/", handler.GetAllSiswa)
 
-	siswa.Get("/:id", handler.GetSiswaByID)
+	siswa.Get("/:id<int>", handler.GetSiswaByID)
 
 	siswa.Post("/", middleware.JWTProtected, handler.CreateSiswa)
 
-	siswa.Put("/:id", middleware.JWTProtected, handler.UpdateSiswa)
+	siswa.Put("/:id<int>", middleware.JWTProtected, handler.UpdateSiswa)
 
-	siswa.Delete("/:id", middleware.JWTProtected, middleware.RequireAdmin, handler.DeleteSiswa)
+	siswa.Delete("/:id<int>", middleware.JWTProtected, middleware.RequireAdmin, handler.DeleteSiswa)
 }

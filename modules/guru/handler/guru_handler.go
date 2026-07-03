@@ -42,15 +42,16 @@ func CreateGuru(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "Input tidak valid")
 	}
 
-	data, err := service.CreateGuru(guru)
+	data, temporaryPassword, err := service.CreateGuru(guru)
 	if err != nil {
 		return helpers.ErrorResponse(c, 400, err.Error())
 	}
 
 	return c.Status(201).JSON(fiber.Map{
-		"success": true,
-		"message": "Guru berhasil ditambahkan",
-		"data":    data,
+		"success":            true,
+		"message":            "Guru berhasil ditambahkan",
+		"data":               data,
+		"temporary_password": temporaryPassword,
 	})
 }
 

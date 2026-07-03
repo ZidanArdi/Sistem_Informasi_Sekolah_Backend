@@ -10,12 +10,14 @@ import (
 
 type Siswa struct {
 	ID           uint             `gorm:"primaryKey" json:"id"`
+	UserID       uint             `gorm:"index" json:"user_id"`
 	NIS          string           `gorm:"type:varchar(30);uniqueIndex;not null" json:"nis"`
 	Nama         string           `gorm:"type:varchar(100);not null" json:"nama"`
 	JenisKelamin string           `gorm:"type:varchar(20)" json:"jenis_kelamin"`
 	TempatLahir  string           `gorm:"type:varchar(80)" json:"tempat_lahir"`
 	TanggalLahir string           `gorm:"type:date" json:"tanggal_lahir"`
 	Alamat       string           `gorm:"type:text;not null" json:"alamat"`
+	NoHP         string           `gorm:"type:varchar(20)" json:"no_hp"`
 	Email        string           `gorm:"type:varchar(120);uniqueIndex" json:"email"`
 	KelasID      uint             `json:"kelas_id"`
 	Kelas        kelasModel.Kelas `gorm:"foreignKey:KelasID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kelas,omitempty"`

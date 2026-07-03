@@ -3,7 +3,9 @@ package repository
 import (
 	"backend/config"
 	"backend/modules/siswa/model"
+	"fmt"
 	"strconv"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -55,14 +57,14 @@ func UpdateSiswa(id uint, data model.Siswa) (model.Siswa, error) {
 		return siswa, err
 	}
 
-	siswa.NIS = data.NIS
 	siswa.Nama = data.Nama
 	siswa.JenisKelamin = data.JenisKelamin
 	siswa.TempatLahir = data.TempatLahir
 	siswa.TanggalLahir = data.TanggalLahir
 	siswa.Alamat = data.Alamat
-	siswa.Email = data.Email
+	siswa.NoHP = data.NoHP
 	siswa.KelasID = data.KelasID
+	siswa.UserID = data.UserID
 
 	if err := config.DB.Save(&siswa).Error; err != nil {
 		return siswa, err
@@ -98,4 +100,31 @@ func CheckNISExists(nis string, excludeID uint) bool {
 	}
 	query.Count(&count)
 	return count > 0
+}
+
+func GenerateNISWithTx(tx *gorm.DB) (string, error) {
+	year := time.Now().Year()
+	prefix := fmt.Sprintf("%d", year)
+
+	var latestSiswa model.Siswa
+	// Lock the row for update to prevent concurrent race condition duplicates
+	err := tx.Set("gorm:query_option", "FOR UPDATE").
+		Where("nis LIKE ?", prefix+"%").
+		Order("nis desc").
+		First(&latestSiswa).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return prefix + "0001", nil
+		}
+		return "", err
+	}
+
+	var seq int
+	_, err = fmt.Sscanf(latestSiswa.NIS, prefix+"%d", &seq)
+	if err != nil {
+		return prefix + "0001", nil
+	}
+
+	return fmt.Sprintf("%s%04d", prefix, seq+1), nil
 }

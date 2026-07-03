@@ -56,16 +56,17 @@ func CreateSiswa(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "Input tidak valid")
 	}
 
-	data, err := service.CreateSiswa(siswa)
+	data, temporaryPassword, err := service.CreateSiswa(siswa)
 
 	if err != nil {
 		return helpers.ErrorResponse(c, 400, err.Error())
 	}
 
 	return c.Status(201).JSON(fiber.Map{
-		"success": true,
-		"message": "Siswa berhasil ditambahkan",
-		"data":    data,
+		"success":            true,
+		"message":            "Siswa berhasil ditambahkan",
+		"data":               data,
+		"temporary_password": temporaryPassword,
 	})
 }
 

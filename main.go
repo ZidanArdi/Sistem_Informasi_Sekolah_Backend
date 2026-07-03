@@ -13,6 +13,8 @@ import (
 	nilaiRoute "backend/modules/nilai/route"
 	siswaRoute "backend/modules/siswa/route"
 	absensiRoute "backend/modules/absensi/route"
+	perizinanRoute "backend/modules/perizinan/route"
+	dashboardRoute "backend/modules/dashboard/route"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -33,16 +35,19 @@ func main() {
 	// route
 	authRoute.AuthRoute(app)
 
+	api := app.Group("/api", middleware.JWTProtected)
+	dashboardRoute.DashboardRoute(api)
+
 	publicAPI := app.Group("/api")
 	siswaRoute.SiswaRoute(publicAPI)
 	absensiRoute.AbsensiRoute(publicAPI)
 
-	api := app.Group("/api", middleware.JWTProtected)
 	guruRoute.GuruRoute(api)
 	kelasRoute.KelasRoute(api)
 	mapelRoute.MapelRoute(api)
 	jadwalRoute.JadwalRoute(api)
 	nilaiRoute.NilaiRoute(api)
+	perizinanRoute.PerizinanRoute(api)
 
 	// test route
 	app.Get("/", func(c *fiber.Ctx) error {
