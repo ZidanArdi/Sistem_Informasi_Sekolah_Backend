@@ -87,7 +87,7 @@ func main() {
 
 	// 2. Seed Guru
 	var guru guruModel.Guru
-	err = db.Where("nip = ?", "198503102010121001").First(&guru).Error
+	err = db.Unscoped().Where("nip = ?", "198503102010121001").First(&guru).Error
 	if err != nil {
 		guru = guruModel.Guru{
 			UserID:       guruUser.ID,
@@ -96,13 +96,20 @@ func main() {
 			Gelar:        "S.Pd.",
 			JenisKelamin: "Laki-laki",
 			NoHP:         "081234567890",
-			Alamat:       "Jl. Cendrawasih No. 10, Semarang",
+			Provinsi:     "JAWA TENGAH",
+			Kabupaten:    "KOTA SEMARANG",
+			Kecamatan:    "SEMARANG SELATAN",
+			Desa:         "LAMPER KIDUL",
+			AlamatDetail: "Jl. Cendrawasih No. 10",
 		}
 		if err := db.Create(&guru).Error; err != nil {
 			log.Fatal("Gagal seeding Guru:", err)
 		}
 		log.Println("Guru Budi Utomo berhasil diseed.")
 	} else {
+		if guru.DeletedAt.Valid {
+			db.Model(&guru).Unscoped().Update("deleted_at", nil)
+		}
 		if guru.UserID == 0 {
 			guru.UserID = guruUser.ID
 			db.Save(&guru)
@@ -113,7 +120,7 @@ func main() {
 
 	// 3. Seed Kelas
 	var kelas kelasModel.Kelas
-	err = db.Where("nama_kelas = ?", "XI-MIPA-1").First(&kelas).Error
+	err = db.Unscoped().Where("nama_kelas = ?", "XI-MIPA-1").First(&kelas).Error
 	if err != nil {
 		kelas = kelasModel.Kelas{
 			NamaKelas:   "XI-MIPA-1",
@@ -125,6 +132,9 @@ func main() {
 		}
 		log.Println("Kelas berhasil diseed.")
 	} else {
+		if kelas.DeletedAt.Valid {
+			db.Model(&kelas).Unscoped().Update("deleted_at", nil)
+		}
 		log.Println("Kelas sudah ada di database.")
 	}
 
@@ -137,25 +147,30 @@ func main() {
 
 	// 4. Seed Siswa
 	var siswa siswaModel.Siswa
-	err = db.Where("email = ?", "siswa@sekolah.com").First(&siswa).Error
+	err = db.Unscoped().Where("nis = ?", "10122045").First(&siswa).Error
 	if err != nil {
 		siswa = siswaModel.Siswa{
 			UserID:       siswaUser.ID,
 			NIS:          "10122045",
 			Nama:         "Rian Hidayat",
 			JenisKelamin: "Laki-laki",
-			TempatLahir:  "Semarang",
 			TanggalLahir: "2008-05-12",
-			Alamat:       "Jl. Cempaka Raya No. 45, Semarang",
 			NoHP:         "082134567890",
-			Email:        "siswa@sekolah.com",
 			KelasID:      kelas.ID,
+			Provinsi:     "JAWA TENGAH",
+			Kabupaten:    "KOTA SEMARANG",
+			Kecamatan:    "SEMARANG TIMUR",
+			Desa:         "REJOSARI",
+			AlamatDetail: "Jl. Cempaka Raya No. 45",
 		}
 		if err := db.Create(&siswa).Error; err != nil {
 			log.Fatal("Gagal seeding Siswa:", err)
 		}
 		log.Println("Siswa berhasil diseed.")
 	} else {
+		if siswa.DeletedAt.Valid {
+			db.Model(&siswa).Unscoped().Update("deleted_at", nil)
+		}
 		if siswa.UserID == 0 {
 			siswa.UserID = siswaUser.ID
 			db.Save(&siswa)

@@ -47,5 +47,20 @@ func validateMapel(data model.Mapel) error {
 		return errors.New("kode_mapel, nama_mapel, dan jam wajib diisi")
 	}
 
+	if !data.IsUmum {
+		if strings.TrimSpace(data.Jurusan) == "" {
+			return errors.New("jurusan wajib diisi jika mata pelajaran tidak umum")
+		}
+		allowedJurusan := map[string]bool{
+			"RPL": true,
+			"TKJ": true,
+			"AKL": true,
+			"DKV": true,
+		}
+		if !allowedJurusan[data.Jurusan] {
+			return errors.New("jurusan tidak valid. Harus salah satu dari: RPL, TKJ, AKL, DKV")
+		}
+	}
+
 	return nil
 }

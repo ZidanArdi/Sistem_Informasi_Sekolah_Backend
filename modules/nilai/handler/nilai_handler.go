@@ -12,9 +12,23 @@ import (
 )
 
 func GetAllNilai(c *fiber.Ctx) error {
-	data, err := service.GetAllNilai(c.Query("siswa_id"), c.Query("mapel_id"), c.Query("semester"), c.Query("jenis_nilai"))
+	userID, ok := c.Locals("user_id").(uint)
+	role, okRole := c.Locals("role").(string)
+	if !ok || !okRole {
+		return helpers.ErrorResponse(c, 401, "User tidak valid")
+	}
+
+	data, err := service.GetAllNilai(
+		userID,
+		role,
+		c.Query("siswa_id"),
+		c.Query("kelas_id"),
+		c.Query("mapel_id"),
+		c.Query("semester"),
+		c.Query("tahun_ajaran"),
+	)
 	if err != nil {
-		return helpers.ErrorResponse(c, 500, "Gagal mengambil data nilai")
+		return helpers.ErrorResponse(c, 500, err.Error())
 	}
 	return helpers.SuccessResponse(c, "Berhasil mengambil data nilai", data)
 }
@@ -37,12 +51,18 @@ func GetNilaiByID(c *fiber.Ctx) error {
 }
 
 func CreateNilai(c *fiber.Ctx) error {
+	userID, ok := c.Locals("user_id").(uint)
+	role, okRole := c.Locals("role").(string)
+	if !ok || !okRole {
+		return helpers.ErrorResponse(c, 401, "User tidak valid")
+	}
+
 	var nilai model.Nilai
 	if err := c.BodyParser(&nilai); err != nil {
 		return helpers.ErrorResponse(c, 400, "Input tidak valid")
 	}
 
-	data, err := service.CreateNilai(nilai)
+	data, err := service.CreateNilai(userID, role, nilai)
 	if err != nil {
 		return helpers.ErrorResponse(c, 400, err.Error())
 	}
@@ -55,6 +75,12 @@ func CreateNilai(c *fiber.Ctx) error {
 }
 
 func UpdateNilai(c *fiber.Ctx) error {
+	userID, ok := c.Locals("user_id").(uint)
+	role, okRole := c.Locals("role").(string)
+	if !ok || !okRole {
+		return helpers.ErrorResponse(c, 401, "User tidak valid")
+	}
+
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return helpers.ErrorResponse(c, 400, "ID nilai tidak valid")
@@ -65,7 +91,7 @@ func UpdateNilai(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "Input tidak valid")
 	}
 
-	data, err := service.UpdateNilai(uint(id), nilai)
+	data, err := service.UpdateNilai(uint(id), userID, role, nilai)
 	if err != nil {
 		if repository.IsNotFoundError(err) {
 			return helpers.ErrorResponse(c, 404, "Nilai tidak ditemukan")
@@ -77,17 +103,22 @@ func UpdateNilai(c *fiber.Ctx) error {
 }
 
 func DeleteNilai(c *fiber.Ctx) error {
+	role, okRole := c.Locals("role").(string)
+	if !okRole {
+		return helpers.ErrorResponse(c, 401, "User tidak valid")
+	}
+
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return helpers.ErrorResponse(c, 400, "ID nilai tidak valid")
 	}
 
-	err = service.DeleteNilai(uint(id))
+	err = service.DeleteNilai(uint(id), role)
 	if err != nil {
 		if repository.IsNotFoundError(err) {
 			return helpers.ErrorResponse(c, 404, "Nilai tidak ditemukan")
 		}
-		return helpers.ErrorResponse(c, 500, "Gagal menghapus nilai")
+		return helpers.ErrorResponse(c, 500, err.Error())
 	}
 
 	return helpers.SuccessResponse(c, "Nilai berhasil dihapus", nil)

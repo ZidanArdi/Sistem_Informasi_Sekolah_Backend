@@ -17,13 +17,31 @@ func GetAllGuru(search string) ([]model.Guru, error) {
 	}
 
 	result := query.Find(&guru)
-	return guru, result.Error
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	for i := range guru {
+		var mapelIDs []uint
+		config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru[i].ID).Pluck("mapel_id", &mapelIDs)
+		guru[i].MapelIDs = mapelIDs
+	}
+
+	return guru, nil
 }
 
 func GetGuruByID(id uint) (model.Guru, error) {
 	var guru model.Guru
 	result := config.DB.Preload("User").First(&guru, id)
-	return guru, result.Error
+	if result.Error != nil {
+		return guru, result.Error
+	}
+
+	var mapelIDs []uint
+	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru.ID).Pluck("mapel_id", &mapelIDs)
+	guru.MapelIDs = mapelIDs
+
+	return guru, nil
 }
 
 func CreateGuru(data model.Guru) (model.Guru, error) {
@@ -32,19 +50,62 @@ func CreateGuru(data model.Guru) (model.Guru, error) {
 }
 
 func UpdateGuru(id uint, data model.Guru) (model.Guru, error) {
-	var guru model.Guru
+	tx := config.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-	if err := config.DB.First(&guru, id).Error; err != nil {
+	var guru model.Guru
+	if err := tx.First(&guru, id).Error; err != nil {
+		tx.Rollback()
 		return guru, err
 	}
 
 	guru.Nama = data.Nama
+	guru.Gelar = data.Gelar
 	guru.JenisKelamin = data.JenisKelamin
 	guru.NoHP = data.NoHP
-	guru.Alamat = data.Alamat
+	guru.Provinsi = data.Provinsi
+	guru.Kabupaten = data.Kabupaten
+	guru.Kecamatan = data.Kecamatan
+	guru.Desa = data.Desa
+	guru.AlamatDetail = data.AlamatDetail
 
-	err := config.DB.Save(&guru).Error
-	return guru, err
+	if err := tx.Save(&guru).Error; err != nil {
+		tx.Rollback()
+		return guru, err
+	}
+
+	// Sync GuruMapel relations: delete old, insert new
+	if err := tx.Where("guru_id = ?", id).Delete(&model.GuruMapel{}).Error; err != nil {
+		tx.Rollback()
+		return guru, err
+	}
+
+	if len(data.MapelIDs) > 0 {
+		for _, mapelID := range data.MapelIDs {
+			gm := model.GuruMapel{GuruID: id, MapelID: mapelID}
+			if err := tx.Create(&gm).Error; err != nil {
+				tx.Rollback()
+				return guru, err
+			}
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return guru, err
+	}
+
+	config.DB.Preload("User").First(&guru, guru.ID)
+	
+	// Reload mapped MapelIDs
+	var mapelIDs []uint
+	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru.ID).Pluck("mapel_id", &mapelIDs)
+	guru.MapelIDs = mapelIDs
+
+	return guru, nil
 }
 
 func DeleteGuru(id uint) error {

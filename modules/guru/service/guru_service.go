@@ -144,12 +144,28 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		return model.Guru{}, "", errors.New("gagal menyimpan data guru: " + err.Error())
 	}
 
+	// 6. Create GuruMapel relations
+	if len(data.MapelIDs) > 0 {
+		for _, mapelID := range data.MapelIDs {
+			gm := model.GuruMapel{GuruID: data.ID, MapelID: mapelID}
+			if err := tx.Create(&gm).Error; err != nil {
+				tx.Rollback()
+				return model.Guru{}, "", errors.New("gagal menyimpan relasi guru mapel: " + err.Error())
+			}
+		}
+	}
+
 	// Commit Transaction
 	if err := tx.Commit().Error; err != nil {
 		return model.Guru{}, "", err
 	}
 
 	config.DB.Preload("User").First(&data, data.ID)
+	
+	// Reload mapped MapelIDs
+	var mapelIDs []uint
+	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", data.ID).Pluck("mapel_id", &mapelIDs)
+	data.MapelIDs = mapelIDs
 
 	return data, plainPassword, nil
 }
@@ -168,8 +184,13 @@ func DeleteGuru(id uint) error {
 func validateGuru(data model.Guru) error {
 	if strings.TrimSpace(data.Nama) == "" ||
 		strings.TrimSpace(data.Gelar) == "" ||
-		strings.TrimSpace(data.JenisKelamin) == "" {
-		return errors.New("nama, gelar, dan jenis_kelamin wajib diisi")
+		strings.TrimSpace(data.JenisKelamin) == "" ||
+		strings.TrimSpace(data.Provinsi) == "" ||
+		strings.TrimSpace(data.Kabupaten) == "" ||
+		strings.TrimSpace(data.Kecamatan) == "" ||
+		strings.TrimSpace(data.Desa) == "" ||
+		strings.TrimSpace(data.AlamatDetail) == "" {
+		return errors.New("nama, gelar, jenis_kelamin, provinsi, kabupaten, kecamatan, desa, dan alamat_detail wajib diisi")
 	}
 
 	return nil

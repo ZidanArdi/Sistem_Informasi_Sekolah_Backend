@@ -48,6 +48,7 @@ func ConnectDB() {
 	err = DB.AutoMigrate(
 		&authModel.User{},
 		&guruModel.Guru{},
+		&guruModel.GuruMapel{},
 		&kelasModel.Kelas{},
 		&siswaModel.Siswa{},
 		&mapelModel.Mapel{},

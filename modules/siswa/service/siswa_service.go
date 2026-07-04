@@ -9,6 +9,7 @@ import (
 
 	"backend/config"
 	authModel "backend/modules/auth/model"
+	kelasModel "backend/modules/kelas/model"
 	"backend/modules/siswa/model"
 	"backend/modules/siswa/repository"
 
@@ -52,8 +53,8 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 		return model.Siswa{}, "", err
 	}
 
-	// 3. Generate random temporary password
-	plainPassword := GenerateRandomPassword()
+	// 3. Use default onboarding password
+	plainPassword := "SISWA123"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
 		tx.Rollback()
@@ -103,11 +104,33 @@ func DeleteSiswa(id uint) error {
 func validateSiswa(data model.Siswa) error {
 	if strings.TrimSpace(data.Nama) == "" ||
 		strings.TrimSpace(data.JenisKelamin) == "" ||
-		strings.TrimSpace(data.TempatLahir) == "" ||
 		strings.TrimSpace(data.TanggalLahir) == "" ||
-		strings.TrimSpace(data.Alamat) == "" ||
+		strings.TrimSpace(data.Provinsi) == "" ||
+		strings.TrimSpace(data.Kabupaten) == "" ||
+		strings.TrimSpace(data.Kecamatan) == "" ||
+		strings.TrimSpace(data.Desa) == "" ||
+		strings.TrimSpace(data.AlamatDetail) == "" ||
 		data.KelasID == 0 {
-		return errors.New("nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, dan kelas_id wajib diisi")
+		return errors.New("nama, jenis_kelamin, tanggal_lahir, provinsi, kabupaten, kecamatan, desa, alamat_detail, dan kelas_id wajib diisi")
 	}
+
+	var kelas kelasModel.Kelas
+	if err := config.DB.First(&kelas, data.KelasID).Error; err != nil {
+		return errors.New("kelas tidak ditemukan")
+	}
+
+	var count int64
+	query := config.DB.Model(&model.Siswa{}).Where("kelas_id = ?", data.KelasID)
+	if data.ID != 0 {
+		query = query.Where("id != ?", data.ID)
+	}
+	if err := query.Count(&count).Error; err != nil {
+		return err
+	}
+
+	if int(count) >= kelas.Kapasitas {
+		return errors.New("Kelas sudah mencapai kapasitas maksimum.")
+	}
+
 	return nil
 }

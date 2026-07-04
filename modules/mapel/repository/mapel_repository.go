@@ -12,7 +12,7 @@ func GetAllMapel(search string) ([]model.Mapel, error) {
 
 	query := config.DB
 	if search != "" {
-		query = query.Where("nama_mapel ILIKE ? OR kode_mapel ILIKE ?", "%"+search+"%", "%"+search+"%")
+		query = query.Where("nama_mapel ILIKE ? OR kode_mapel ILIKE ? OR jurusan ILIKE ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 
 	result := query.Find(&mapel)
@@ -40,6 +40,8 @@ func UpdateMapel(id uint, data model.Mapel) (model.Mapel, error) {
 	mapel.KodeMapel = data.KodeMapel
 	mapel.NamaMapel = data.NamaMapel
 	mapel.Jam = data.Jam
+	mapel.Jurusan = data.Jurusan
+	mapel.IsUmum = data.IsUmum
 
 	err := config.DB.Save(&mapel).Error
 	return mapel, err

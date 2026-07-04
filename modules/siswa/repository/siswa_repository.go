@@ -59,12 +59,15 @@ func UpdateSiswa(id uint, data model.Siswa) (model.Siswa, error) {
 
 	siswa.Nama = data.Nama
 	siswa.JenisKelamin = data.JenisKelamin
-	siswa.TempatLahir = data.TempatLahir
 	siswa.TanggalLahir = data.TanggalLahir
-	siswa.Alamat = data.Alamat
 	siswa.NoHP = data.NoHP
 	siswa.KelasID = data.KelasID
 	siswa.UserID = data.UserID
+	siswa.Provinsi = data.Provinsi
+	siswa.Kabupaten = data.Kabupaten
+	siswa.Kecamatan = data.Kecamatan
+	siswa.Desa = data.Desa
+	siswa.AlamatDetail = data.AlamatDetail
 
 	if err := config.DB.Save(&siswa).Error; err != nil {
 		return siswa, err

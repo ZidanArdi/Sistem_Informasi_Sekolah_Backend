@@ -15,6 +15,10 @@ import (
 	absensiRoute "backend/modules/absensi/route"
 	perizinanRoute "backend/modules/perizinan/route"
 	dashboardRoute "backend/modules/dashboard/route"
+	userRoute "backend/modules/user/route"
+
+	"io"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -31,23 +35,50 @@ func main() {
 	// middleware
 	app.Use(cors.New())
 	app.Use(logger.New())
+	app.Static("/uploads", "./uploads")
 
 	// route
 	authRoute.AuthRoute(app)
-
-	api := app.Group("/api", middleware.JWTProtected)
-	dashboardRoute.DashboardRoute(api)
 
 	publicAPI := app.Group("/api")
 	siswaRoute.SiswaRoute(publicAPI)
 	absensiRoute.AbsensiRoute(publicAPI)
 
+	// Proxy regional data requests to prevent browser CORS and adblocker issues
+	publicAPI.Get("/regions/*", func(c *fiber.Ctx) error {
+		path := c.Params("*")
+		url := "https://emsifa.github.io/api-wilayah-indonesia/api/" + path
+
+		resp, err := http.Get(url)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal menghubungi API wilayah: " + err.Error(),
+			})
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"success": false,
+				"message": "Gagal membaca data wilayah: " + err.Error(),
+			})
+		}
+
+		c.Set("Content-Type", "application/json")
+		return c.Send(body)
+	})
+
+	api := app.Group("/api", middleware.JWTProtected)
+	dashboardRoute.DashboardRoute(api)
 	guruRoute.GuruRoute(api)
 	kelasRoute.KelasRoute(api)
 	mapelRoute.MapelRoute(api)
 	jadwalRoute.JadwalRoute(api)
 	nilaiRoute.NilaiRoute(api)
 	perizinanRoute.PerizinanRoute(api)
+	userRoute.UserRoute(api)
 
 	// test route
 	app.Get("/", func(c *fiber.Ctx) error {

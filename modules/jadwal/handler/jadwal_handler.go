@@ -12,7 +12,7 @@ import (
 )
 
 func GetAllJadwal(c *fiber.Ctx) error {
-	data, err := service.GetAllJadwal(c.Query("kelas_id"), c.Query("mapel_id"), c.Query("guru_id"), c.Query("hari"))
+	data, err := service.GetAllJadwal(c.Query("kelas_id"), c.Query("mapel_id"), c.Query("guru_id"), c.Query("hari"), c.Query("tahun_ajaran"), c.Query("semester"))
 	if err != nil {
 		return helpers.ErrorResponse(c, 500, "Gagal mengambil data jadwal")
 	}

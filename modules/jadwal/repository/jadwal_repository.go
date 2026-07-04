@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAllJadwal(kelasID string, mapelID string, guruID string, hari string) ([]model.Jadwal, error) {
+func GetAllJadwal(kelasID string, mapelID string, guruID string, hari string, tahunAjaran string, semester string) ([]model.Jadwal, error) {
 	var jadwal []model.Jadwal
 
 	query := config.DB.Preload("Kelas").Preload("Kelas.WaliKelas").Preload("Mapel").Preload("Guru")
@@ -30,6 +30,12 @@ func GetAllJadwal(kelasID string, mapelID string, guruID string, hari string) ([
 	}
 	if hari != "" {
 		query = query.Where("hari ILIKE ?", hari)
+	}
+	if tahunAjaran != "" {
+		query = query.Where("tahun_ajaran = ?", tahunAjaran)
+	}
+	if semester != "" {
+		query = query.Where("semester = ?", semester)
 	}
 
 	result := query.Find(&jadwal)
@@ -63,6 +69,8 @@ func UpdateJadwal(id uint, data model.Jadwal) (model.Jadwal, error) {
 	jadwal.Hari = data.Hari
 	jadwal.JamMulai = data.JamMulai
 	jadwal.JamSelesai = data.JamSelesai
+	jadwal.TahunAjaran = data.TahunAjaran
+	jadwal.Semester = data.Semester
 
 	if err := config.DB.Save(&jadwal).Error; err != nil {
 		return jadwal, err

@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"backend/config"
@@ -98,6 +99,10 @@ func Login(input LoginInput) (model.User, string, error) {
 		}
 	}
 
+	if !user.IsActive {
+		return model.User{}, "", errors.New("akun Anda telah dinonaktifkan, silakan hubungi admin")
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
 		return model.User{}, "", errors.New("email/NIS atau password salah")
 	}
@@ -119,37 +124,75 @@ func Login(input LoginInput) (model.User, string, error) {
 		var siswa struct {
 			NIS          string
 			NoHP         string
-			Alamat       string
 			JenisKelamin string
+			Provinsi     string
+			Kabupaten    string
+			Kecamatan    string
+			Desa         string
+			AlamatDetail string
 		}
 		config.DB.Table("siswas").
-			Select("nis, no_hp, alamat, jenis_kelamin").
+			Select("nis, no_hp, jenis_kelamin, provinsi, kabupaten, kecamatan, desa, alamat_detail").
 			Where("user_id = ?", user.ID).
 			Scan(&siswa)
 		user.NIS = siswa.NIS
 		user.NoHP = siswa.NoHP
-		user.Alamat = siswa.Alamat
 		user.JenisKelamin = siswa.JenisKelamin
+		if siswa.AlamatDetail != "" {
+			user.Alamat = fmt.Sprintf("%s, %s, %s, %s, %s", siswa.AlamatDetail, siswa.Desa, siswa.Kecamatan, siswa.Kabupaten, siswa.Provinsi)
+		}
 	} else if user.Role == "guru" {
 		var guru struct {
 			NIP          string
 			Gelar        string
 			NoHP         string
-			Alamat       string
 			JenisKelamin string
+			Provinsi     string
+			Kabupaten    string
+			Kecamatan    string
+			Desa         string
+			AlamatDetail string
 		}
 		config.DB.Table("gurus").
-			Select("nip, gelar, no_hp, alamat, jenis_kelamin").
+			Select("nip, gelar, no_hp, jenis_kelamin, provinsi, kabupaten, kecamatan, desa, alamat_detail").
 			Where("user_id = ?", user.ID).
 			Scan(&guru)
 		user.NIP = guru.NIP
 		user.Gelar = guru.Gelar
 		user.NoHP = guru.NoHP
-		user.Alamat = guru.Alamat
 		user.JenisKelamin = guru.JenisKelamin
+		if guru.AlamatDetail != "" {
+			user.Alamat = fmt.Sprintf("%s, %s, %s, %s, %s", guru.AlamatDetail, guru.Desa, guru.Kecamatan, guru.Kabupaten, guru.Provinsi)
+		}
 	}
 
 	return user, token, nil
+}
+
+func validateNewPasswordStrength(password string) error {
+	if len(password) < 8 {
+		return errors.New("password baru minimal 8 karakter")
+	}
+	var hasUpper, hasLower, hasNumber bool
+	for _, char := range password {
+		if char >= 'A' && char <= 'Z' {
+			hasUpper = true
+		} else if char >= 'a' && char <= 'z' {
+			hasLower = true
+		} else if char >= '0' && char <= '9' {
+			hasNumber = true
+		}
+	}
+	if !hasUpper {
+		return errors.New("password baru harus mengandung minimal 1 huruf besar")
+	}
+	if !hasLower {
+		return errors.New("password baru harus mengandung minimal 1 huruf kecil")
+	}
+	if !hasNumber {
+		return errors.New("password baru harus mengandung minimal 1 angka")
+	}
+	return nil
 }
 
 func ChangePassword(userID uint, input ChangePasswordInput) error {
@@ -157,8 +200,8 @@ func ChangePassword(userID uint, input ChangePasswordInput) error {
 		return errors.New("password lama dan password baru wajib diisi")
 	}
 
-	if len(input.NewPassword) < 6 {
-		return errors.New("password baru minimal 6 karakter")
+	if err := validateNewPasswordStrength(input.NewPassword); err != nil {
+		return err
 	}
 
 	user, err := repository.GetUserByID(userID)

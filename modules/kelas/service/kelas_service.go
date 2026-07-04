@@ -24,6 +24,7 @@ func CreateKelas(data model.Kelas) (model.Kelas, error) {
 }
 
 func UpdateKelas(id uint, data model.Kelas) (model.Kelas, error) {
+	data.ID = id
 	if err := validateKelas(data); err != nil {
 		return model.Kelas{}, err
 	}
@@ -35,8 +36,29 @@ func DeleteKelas(id uint) error {
 }
 
 func validateKelas(data model.Kelas) error {
-	if strings.TrimSpace(data.NamaKelas) == "" || strings.TrimSpace(data.Tingkat) == "" {
-		return errors.New("nama_kelas dan tingkat wajib diisi")
+	if strings.TrimSpace(data.NamaKelas) == "" ||
+		strings.TrimSpace(data.Tingkat) == "" ||
+		strings.TrimSpace(data.Jurusan) == "" ||
+		data.Kapasitas <= 0 {
+		return errors.New("nama_kelas, tingkat, jurusan, dan kapasitas wajib diisi dengan benar")
+	}
+
+	// Validate Jurusan enum values
+	allowedJurusan := map[string]bool{
+		"RPL": true,
+		"TKJ": true,
+		"AKL": true,
+		"DKV": true,
+	}
+	if !allowedJurusan[data.Jurusan] {
+		return errors.New("jurusan tidak valid. Harus salah satu dari: RPL, TKJ, AKL, DKV")
+	}
+
+	// Validate WaliKelas assignment (One guru can become wali kelas for one class only)
+	if data.WaliKelasID != nil && *data.WaliKelasID != 0 {
+		if repository.CheckWaliKelasExists(*data.WaliKelasID, data.ID) {
+			return errors.New("guru ini sudah menjadi wali kelas di kelas lain")
+		}
 	}
 
 	return nil
