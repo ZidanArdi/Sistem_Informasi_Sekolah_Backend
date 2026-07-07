@@ -16,8 +16,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetAllSiswa(search string, kelasID string) ([]model.Siswa, error) {
-	return repository.GetAllSiswa(search, kelasID)
+func GetAllSiswa(search string, kelasID string, guruID string) ([]model.Siswa, error) {
+	return repository.GetAllSiswa(search, kelasID, guruID)
 }
 
 func GetSiswaByID(id uint) (model.Siswa, error) {

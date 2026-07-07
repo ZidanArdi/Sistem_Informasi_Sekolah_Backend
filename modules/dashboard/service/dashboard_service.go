@@ -11,6 +11,7 @@ import (
 	jadwalModel "backend/modules/jadwal/model"
 	kelasModel "backend/modules/kelas/model"
 	mapelModel "backend/modules/mapel/model"
+	nilaiModel "backend/modules/nilai/model"
 	perizinanModel "backend/modules/perizinan/model"
 	siswaModel "backend/modules/siswa/model"
 )
@@ -24,8 +25,10 @@ type AdminDashboardData struct {
 }
 
 type GuruDashboardData struct {
-	TotalSiswa            int64                 `json:"total_siswa"`
-	TotalPerizinanPending int64                 `json:"total_perizinan_pending"`
+	TodaySchedule         int64                 `json:"today_schedule"`
+	TotalClasses          int64                 `json:"total_classes"`
+	TotalStudents         int64                 `json:"total_students"`
+	PendingGrades         int64                 `json:"pending_grades"`
 	JadwalHariIni         []jadwalModel.Jadwal  `json:"jadwal_hari_ini"`
 }
 
@@ -93,14 +96,44 @@ func GetGuruDashboard(role string, email string) (GuruDashboardData, error) {
 		return GuruDashboardData{}, errors.New("data profil guru tidak ditemukan")
 	}
 
-	// 1. Total Siswa (School wide)
-	config.DB.Model(&siswaModel.Siswa{}).Count(&data.TotalSiswa)
+	// 1. Today's Schedule Count
+	config.DB.Model(&jadwalModel.Jadwal{}).Where("guru_id = ? AND hari = ?", guru.ID, todayDayName).Count(&data.TodaySchedule)
 
-	// 2. Total Perizinan Pending (Siswa -> Semua Guru approval)
-	config.DB.Model(&perizinanModel.Perizinan{}).Where("status = ?", "Pending").Count(&data.TotalPerizinanPending)
+	// 2. Total Classes Assigned
+	config.DB.Model(&jadwalModel.Jadwal{}).Where("guru_id = ?", guru.ID).Distinct("kelas_id").Count(&data.TotalClasses)
 
-	// 3. Jadwal Hari Ini
+	// 3. Total Students in Classes Taught
+	config.DB.Model(&siswaModel.Siswa{}).Where("kelas_id IN (SELECT DISTINCT kelas_id FROM jadwals WHERE guru_id = ? AND deleted_at IS NULL)", guru.ID).Count(&data.TotalStudents)
+
+	// 4. Pending Grade Completion
+	var schedules []jadwalModel.Jadwal
+	config.DB.Where("guru_id = ?", guru.ID).Find(&schedules)
+
+	var pendingGrades int64 = 0
+	for _, sched := range schedules {
+		var classStudentsCount int64
+		config.DB.Model(&siswaModel.Siswa{}).Where("kelas_id = ?", sched.KelasID).Count(&classStudentsCount)
+
+		var gradedCount int64
+		config.DB.Model(&nilaiModel.Nilai{}).
+			Where("mapel_id = ? AND kelas_id = ? AND semester = ? AND tahun_ajaran = ?", sched.MapelID, sched.KelasID, sched.Semester, sched.TahunAjaran).
+			Count(&gradedCount)
+
+		if classStudentsCount > gradedCount {
+			pendingGrades += (classStudentsCount - gradedCount)
+		}
+	}
+	data.PendingGrades = pendingGrades
+
+	// 5. Today's schedules list
 	config.DB.Preload("Kelas").Preload("Mapel").Where("guru_id = ? AND hari = ?", guru.ID, todayDayName).Find(&data.JadwalHariIni)
+
+	// Populate TotalSiswa for each schedule's class
+	for i := range data.JadwalHariIni {
+		var count int64
+		config.DB.Model(&siswaModel.Siswa{}).Where("kelas_id = ?", data.JadwalHariIni[i].KelasID).Count(&count)
+		data.JadwalHariIni[i].Kelas.TotalSiswa = int(count)
+	}
 
 	return data, nil
 }

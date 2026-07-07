@@ -15,8 +15,9 @@ func GetAllSiswa(c *fiber.Ctx) error {
 
 	search := c.Query("search")
 	kelasID := c.Query("kelas_id")
+	guruID := c.Query("guru_id")
 
-	data, err := service.GetAllSiswa(search, kelasID)
+	data, err := service.GetAllSiswa(search, kelasID, guruID)
 
 	if err != nil {
 		return helpers.ErrorResponse(c, 500, "Gagal mengambil data siswa")

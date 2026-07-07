@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAllSiswa(search string, kelasID string) ([]model.Siswa, error) {
+func GetAllSiswa(search string, kelasID string, guruID string) ([]model.Siswa, error) {
 
 	var siswa []model.Siswa
 
@@ -23,6 +23,12 @@ func GetAllSiswa(search string, kelasID string) ([]model.Siswa, error) {
 	if kelasID != "" {
 		if parsedKelasID, err := strconv.Atoi(kelasID); err == nil {
 			query = query.Where("kelas_id = ?", parsedKelasID)
+		}
+	}
+
+	if guruID != "" {
+		if parsedGuruID, err := strconv.Atoi(guruID); err == nil {
+			query = query.Where("kelas_id IN (SELECT DISTINCT kelas_id FROM jadwals WHERE guru_id = ? AND deleted_at IS NULL)", parsedGuruID)
 		}
 	}
 
