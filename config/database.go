@@ -13,6 +13,7 @@ import (
 	siswaModel "backend/modules/siswa/model"
 	absensiModel "backend/modules/absensi/model"
 	perizinanModel "backend/modules/perizinan/model"
+	schoolModel "backend/modules/school/model"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -56,6 +57,7 @@ func ConnectDB() {
 		&nilaiModel.Nilai{},
 		&absensiModel.Absensi{},
 		&perizinanModel.Perizinan{},
+		&schoolModel.SchoolProfile{},
 	)
 	if err != nil {
 		log.Fatal("Gagal menjalankan auto migrate")

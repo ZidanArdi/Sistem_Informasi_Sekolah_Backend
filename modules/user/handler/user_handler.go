@@ -2,9 +2,6 @@ package handler
 
 import (
 	"errors"
-	"fmt"
-	"math/rand"
-	"time"
 
 	"backend/config"
 	"backend/helpers"
@@ -51,11 +48,16 @@ func GetUsers(c *fiber.Ctx) error {
 	var gurus []struct {
 		UserID uint
 		Nama   string
+		NIP    string `gorm:"column:nip"`
 	}
-	config.DB.Table("gurus").Select("user_id, nama").Find(&gurus)
-	guruMap := make(map[uint]string)
+	config.DB.Table("gurus").Select("user_id, nama, nip").Find(&gurus)
+	type GuruInfo struct {
+		Nama string
+		NIP  string
+	}
+	guruMap := make(map[uint]GuruInfo)
 	for _, g := range gurus {
-		guruMap[g.UserID] = g.Nama
+		guruMap[g.UserID] = GuruInfo{Nama: g.Nama, NIP: g.NIP}
 	}
 
 	response := make([]UserResponse, 0)
@@ -72,8 +74,9 @@ func GetUsers(c *fiber.Ctx) error {
 				identifier = info.NIS
 			}
 		} else if u.Role == "guru" {
-			if gName, exists := guruMap[u.ID]; exists {
-				name = gName
+			if info, exists := guruMap[u.ID]; exists {
+				name = info.Nama
+				identifier = info.NIP
 			}
 		}
 
@@ -112,6 +115,10 @@ func UpdateUserStatus(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
+	if user.Role == "admin" {
+		return helpers.ErrorResponse(c, fiber.StatusForbidden, "ERR_PERMISSION_DENIED: Status administrator tidak dapat diubah")
+	}
+
 	user.IsActive = *input.IsActive
 	if err := config.DB.Save(&user).Error; err != nil {
 		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal mengupdate status user: "+err.Error())
@@ -134,10 +141,18 @@ func ResetUserPassword(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	// Generate random password like RST-XXXXX
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	num := r.Intn(90000) + 10000
-	plainPassword := fmt.Sprintf("RST-%d", num)
+	if user.Role == "admin" {
+		return helpers.ErrorResponse(c, fiber.StatusForbidden, "ERR_PERMISSION_DENIED: Password administrator tidak dapat direset")
+	}
+
+	var plainPassword string
+	if user.Role == "admin" {
+		plainPassword = "Admin123!"
+	} else if user.Role == "guru" {
+		plainPassword = "Guru123!"
+	} else {
+		plainPassword = "Siswa123!"
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {

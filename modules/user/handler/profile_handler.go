@@ -48,8 +48,12 @@ func GetProfile(c *fiber.Ctx) error {
 			Pluck("nama", &mapelNames)
 
 		emailStr := ""
-		if guru.User != nil && guru.User.Email != nil {
-			emailStr = *guru.User.Email
+		var lastLogin *time.Time
+		if guru.User != nil {
+			if guru.User.Email != nil {
+				emailStr = *guru.User.Email
+			}
+			lastLogin = guru.User.LastLoginAt
 		}
 
 		return helpers.SuccessResponse(c, "Berhasil mengambil profil guru", fiber.Map{
@@ -68,6 +72,7 @@ func GetProfile(c *fiber.Ctx) error {
 			"photo_url":       guru.PhotoURL,
 			"email":           emailStr,
 			"subjects_taught": mapelNames,
+			"last_login_at":   lastLogin,
 		})
 	} else if role == "siswa" {
 		var siswa siswaModel.Siswa
@@ -79,6 +84,9 @@ func GetProfile(c *fiber.Ctx) error {
 		if siswa.Kelas.NamaKelas != "" {
 			kelasNama = siswa.Kelas.NamaKelas
 		}
+
+		var lastLogin *time.Time
+		config.DB.Table("users").Select("last_login_at").Where("id = ?", userID).Scan(&lastLogin)
 
 		return helpers.SuccessResponse(c, "Berhasil mengambil profil siswa", fiber.Map{
 			"role":          "siswa",
@@ -95,20 +103,23 @@ func GetProfile(c *fiber.Ctx) error {
 			"alamat_detail": siswa.AlamatDetail,
 			"photo_url":     siswa.PhotoURL,
 			"kelas":         kelasNama,
+			"last_login_at": lastLogin,
 		})
 	}
 
 	// Fallback for Admin
 	var user struct {
-		Nama  string
-		Email string
+		Nama        string
+		Email       string
+		LastLoginAt *time.Time
 	}
-	config.DB.Table("users").Select("nama, email").Where("id = ?", userID).Scan(&user)
+	config.DB.Table("users").Select("nama, email, last_login_at").Where("id = ?", userID).Scan(&user)
 
 	return helpers.SuccessResponse(c, "Berhasil mengambil profil admin", fiber.Map{
-		"role":  role,
-		"nama":  user.Nama,
-		"email": user.Email,
+		"role":          role,
+		"nama":          user.Nama,
+		"email":         user.Email,
+		"last_login_at": user.LastLoginAt,
 	})
 }
 

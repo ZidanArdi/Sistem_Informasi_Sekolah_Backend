@@ -3,7 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 
 	"backend/config"
 	"backend/helpers"
@@ -38,7 +40,7 @@ func Register(input RegisterInput) (model.User, error) {
 	}
 
 	if repository.EmailExists(input.Email) {
-		return model.User{}, errors.New("email sudah terdaftar")
+		return model.User{}, errors.New("ERR_EMAIL_DUPLICATE: email sudah terdaftar")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
@@ -48,10 +50,11 @@ func Register(input RegisterInput) (model.User, error) {
 
 	emailVal := strings.TrimSpace(strings.ToLower(input.Email))
 	user := model.User{
-		Nama:     strings.TrimSpace(input.Nama),
-		Email:    &emailVal,
-		Password: string(hashedPassword),
-		Role:     input.Role,
+		Nama:         strings.TrimSpace(input.Nama),
+		Email:        &emailVal,
+		Password:     string(hashedPassword),
+		Role:         input.Role,
+		IsFirstLogin: true, // Every newly created account IsFirstLogin = true
 	}
 
 	return repository.CreateUser(user)
@@ -64,7 +67,7 @@ func Login(input LoginInput) (model.User, string, error) {
 	}
 
 	if strings.TrimSpace(loginID) == "" || input.Password == "" {
-		return model.User{}, "", errors.New("email/NIS dan password wajib diisi")
+		return model.User{}, "", errors.New("ERR_LOGIN_FAILED: email/ID Pengguna dan password wajib diisi")
 	}
 
 	loginID = strings.TrimSpace(loginID)
@@ -72,40 +75,69 @@ func Login(input LoginInput) (model.User, string, error) {
 	var err error
 
 	if strings.Contains(loginID, "@") {
-		// Email Login (Admin/Guru)
+		// Email Login
 		user, err = repository.GetUserByEmail(strings.ToLower(loginID))
 		if err != nil {
-			return model.User{}, "", errors.New("email atau password salah")
+			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: email/ID Pengguna atau password salah")
 		}
-		if user.Role == "siswa" {
-			return model.User{}, "", errors.New("siswa wajib login menggunakan NIS")
+	} else if strings.HasPrefix(strings.ToUpper(loginID), "GR") {
+		// NIG Login (Guru)
+		var guru struct {
+			UserID uint `gorm:"column:user_id"`
+		}
+		errNIG := config.DB.Table("gurus").Select("user_id").Where("nip = ? AND deleted_at IS NULL", strings.ToUpper(loginID)).First(&guru).Error
+		if errNIG != nil {
+			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: NIG tidak terdaftar")
+		}
+		user, err = repository.GetUserByID(guru.UserID)
+		if err != nil {
+			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: akun guru tidak ditemukan")
+		}
+	} else if strings.ToUpper(loginID) == "ADM001" {
+		// Admin Code Login
+		user, err = repository.GetUserByEmail("admin@sekolah.com")
+		if err != nil {
+			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: akun admin tidak ditemukan")
 		}
 	} else {
 		// NIS Login (Siswa)
 		userID, _, errNIS := repository.GetUserIDByNIS(loginID)
 		if errNIS != nil {
-			return model.User{}, "", errors.New("NIS tidak terdaftar")
+			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: NIS tidak terdaftar")
 		}
-		if userID == 0 {
-			return model.User{}, "", errors.New("akun siswa belum terbuat, silakan hubungi admin")
-		}
-
 		user, err = repository.GetUserByID(userID)
 		if err != nil {
-			return model.User{}, "", errors.New("akun siswa tidak ditemukan")
-		}
-		if user.Role != "siswa" {
-			return model.User{}, "", errors.New("NIS hanya untuk login siswa")
+			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: akun siswa tidak ditemukan")
 		}
 	}
 
 	if !user.IsActive {
-		return model.User{}, "", errors.New("akun Anda telah dinonaktifkan, silakan hubungi admin")
+		return model.User{}, "", errors.New("ERR_PERMISSION_DENIED: akun Anda telah dinonaktifkan, silakan hubungi admin")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		return model.User{}, "", errors.New("email/NIS atau password salah")
+		return model.User{}, "", errors.New("ERR_LOGIN_FAILED: email/ID Pengguna atau password salah")
 	}
+
+	// Dynamic first login / default password check
+	isDefaultPassword := false
+	if user.Role == "admin" && input.Password == "Admin123!" {
+		isDefaultPassword = true
+	} else if user.Role == "guru" && input.Password == "Guru123!" {
+		isDefaultPassword = true
+	} else if user.Role == "siswa" && input.Password == "Siswa123!" {
+		isDefaultPassword = true
+	}
+
+	if isDefaultPassword {
+		user.IsFirstLogin = true
+		config.DB.Model(&model.User{}).Where("id = ?", user.ID).Update("is_first_login", true)
+	}
+
+	// Update last login timestamp
+	now := time.Now()
+	user.LastLoginAt = &now
+	config.DB.Model(&model.User{}).Where("id = ?", user.ID).Update("last_login_at", &now)
 
 	var emailStr string
 	if user.Email != nil {
@@ -166,6 +198,17 @@ func Login(input LoginInput) (model.User, string, error) {
 		}
 	}
 
+	// LOG Login Info
+	var resolvedIdentifier string
+	if user.Role == "admin" {
+		resolvedIdentifier = "ADM001"
+	} else if user.Role == "guru" {
+		resolvedIdentifier = user.NIP
+	} else {
+		resolvedIdentifier = user.NIS
+	}
+	log.Printf("[INFO] Action: Login | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), user.Nama, resolvedIdentifier, emailStr)
+
 	return user, token, nil
 }
 
@@ -210,7 +253,7 @@ func ChangePassword(userID uint, input ChangePasswordInput) error {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.OldPassword)); err != nil {
-		return errors.New("password lama tidak sesuai")
+		return errors.New("ERR_LOGIN_FAILED: password lama tidak sesuai")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
@@ -218,7 +261,32 @@ func ChangePassword(userID uint, input ChangePasswordInput) error {
 		return err
 	}
 
-	return repository.UpdatePassword(userID, string(hashedPassword))
+	err = repository.UpdatePassword(userID, string(hashedPassword))
+	if err != nil {
+		return err
+	}
+
+	// LOG Password Changed Info
+	var resolvedIdentifier string
+	var emailStr string
+	if user.Email != nil {
+		emailStr = *user.Email
+	}
+
+	if user.Role == "admin" {
+		resolvedIdentifier = "ADM001"
+	} else if user.Role == "guru" {
+		var nip string
+		config.DB.Table("gurus").Select("nip").Where("user_id = ?", user.ID).Row().Scan(&nip)
+		resolvedIdentifier = nip
+	} else {
+		var nis string
+		config.DB.Table("siswas").Select("nis").Where("user_id = ?", user.ID).Row().Scan(&nis)
+		resolvedIdentifier = nis
+	}
+	log.Printf("[INFO] Action: Password Changed | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), user.Nama, resolvedIdentifier, emailStr)
+
+	return nil
 }
 
 func validateRegister(input RegisterInput) error {
@@ -236,8 +304,8 @@ func validateRegister(input RegisterInput) error {
 		return errors.New("password minimal 6 karakter")
 	}
 
-	if input.Role != "admin" && input.Role != "guru" {
-		return errors.New("pendaftaran mandiri hanya diperbolehkan untuk role admin atau guru")
+	if input.Role != "guru" {
+		return errors.New("ERR_PERMISSION_DENIED: pendaftaran mandiri hanya diperbolehkan untuk role guru")
 	}
 
 	return nil

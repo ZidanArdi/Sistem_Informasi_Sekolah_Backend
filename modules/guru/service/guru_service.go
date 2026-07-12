@@ -3,7 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -74,12 +74,6 @@ func GenerateGuruEmail(nama string) (string, error) {
 	}
 }
 
-func GenerateRandomPassword() string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	num := r.Intn(90000) + 10000
-	return fmt.Sprintf("GR-%d", num)
-}
-
 func CreateGuru(data model.Guru) (model.Guru, string, error) {
 	// Start Database Transaction
 	tx := config.DB.Begin()
@@ -97,11 +91,20 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 	}
 	data.NIP = nip
 
-	// 2. Auto generate Email
-	email, err := GenerateGuruEmail(data.Nama)
-	if err != nil {
-		tx.Rollback()
-		return model.Guru{}, "", err
+	// 2. Auto generate Email based on NIG (data.NIP)
+	var email string
+	var seq int
+	if len(data.NIP) >= 4 {
+		fmt.Sscanf(data.NIP, "GR%d", &seq)
+	}
+	if seq == 0 {
+		seq = 1
+	}
+
+	if seq == 1 {
+		email = "principal@sekolah.com"
+	} else {
+		email = fmt.Sprintf("guru%02d@sekolah.com", seq)
 	}
 
 	// Validate fields
@@ -110,38 +113,55 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		return model.Guru{}, "", err
 	}
 
-	if repository.CheckNIPExists(data.NIP, 0) {
+	// Check if NIG already exists
+	var exists int64
+	if err := tx.Model(&model.Guru{}).Where("nip = ?", data.NIP).Count(&exists).Error; err != nil {
 		tx.Rollback()
-		return model.Guru{}, "", errors.New("NIP sudah terdaftar")
+		return model.Guru{}, "", fmt.Errorf("ERR_GENERATE_NIG: Gagal memeriksa keunikan NIG: %v", err)
+	}
+	if exists > 0 {
+		tx.Rollback()
+		return model.Guru{}, "", errors.New("ERR_IDENTIFIER_DUPLICATE: NIG sudah terdaftar")
 	}
 
-	// 3. Generate random temporary password
-	plainPassword := GenerateRandomPassword()
+	// Check if Email already exists
+	var emailCount int64
+	if err := tx.Model(&authModel.User{}).Where("email = ?", email).Count(&emailCount).Error; err != nil {
+		tx.Rollback()
+		return model.Guru{}, "", fmt.Errorf("ERR_GENERATE_NIG: Gagal memeriksa keunikan email: %v", err)
+	}
+	if emailCount > 0 {
+		tx.Rollback()
+		return model.Guru{}, "", errors.New("ERR_EMAIL_DUPLICATE: Email sudah terdaftar")
+	}
+
+	// 3. Set default password
+	plainPassword := "Guru123!"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
 		tx.Rollback()
 		return model.Guru{}, "", err
 	}
 
-	// 4. Create User record (Guru does NOT use force change password, so is_first_login = false)
+	// 4. Create User record (Guru forces change password, so is_first_login = true)
 	user := authModel.User{
 		Nama:         data.Nama,
 		Email:        &email,
 		Password:     string(hashedPassword),
 		Role:         "guru",
-		IsFirstLogin: false,
+		IsFirstLogin: true,
 	}
 
 	if err := tx.Create(&user).Error; err != nil {
 		tx.Rollback()
-		return model.Guru{}, "", errors.New("gagal membuat akun user untuk guru: " + err.Error())
+		return model.Guru{}, "", errors.New("ERR_EMAIL_DUPLICATE: gagal membuat akun user untuk guru: " + err.Error())
 	}
 
 	// 5. Link User ID to Guru record and save Guru
 	data.UserID = user.ID
 	if err := tx.Create(&data).Error; err != nil {
 		tx.Rollback()
-		return model.Guru{}, "", errors.New("gagal menyimpan data guru: " + err.Error())
+		return model.Guru{}, "", errors.New("ERR_GENERATE_NIG: gagal menyimpan data guru: " + err.Error())
 	}
 
 	// 6. Create GuruMapel relations
@@ -150,7 +170,7 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 			gm := model.GuruMapel{GuruID: data.ID, MapelID: mapelID}
 			if err := tx.Create(&gm).Error; err != nil {
 				tx.Rollback()
-				return model.Guru{}, "", errors.New("gagal menyimpan relasi guru mapel: " + err.Error())
+				return model.Guru{}, "", errors.New("ERR_GENERATE_NIG: gagal menyimpan relasi guru mapel: " + err.Error())
 			}
 		}
 	}
@@ -159,6 +179,9 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 	if err := tx.Commit().Error; err != nil {
 		return model.Guru{}, "", err
 	}
+
+	// LOG Teacher Created Info
+	log.Printf("[INFO] Action: Teacher Created | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), data.Nama, data.NIP, email)
 
 	config.DB.Preload("User").First(&data, data.ID)
 	

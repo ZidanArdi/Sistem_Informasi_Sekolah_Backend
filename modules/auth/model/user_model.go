@@ -10,6 +10,7 @@ type User struct {
 	Role         string    `gorm:"type:varchar(20);not null;default:siswa" json:"role"`
 	IsFirstLogin bool      `gorm:"type:boolean;not null;default:false" json:"is_first_login"`
 	IsActive     bool      `gorm:"type:boolean;not null;default:true" json:"is_active"`
+	LastLoginAt  *time.Time `gorm:"type:timestamp" json:"last_login_at,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 

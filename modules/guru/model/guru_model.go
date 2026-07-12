@@ -42,3 +42,7 @@ type GuruMapel struct {
 	GuruID  uint `gorm:"uniqueIndex:idx_guru_mapel;not null" json:"guru_id"`
 	MapelID uint `gorm:"uniqueIndex:idx_guru_mapel;not null" json:"mapel_id"`
 }
+
+func (GuruMapel) TableName() string {
+	return "guru_mapel"
+}

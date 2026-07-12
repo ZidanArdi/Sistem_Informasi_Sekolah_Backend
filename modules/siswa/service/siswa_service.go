@@ -3,7 +3,8 @@ package service
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"backend/modules/siswa/repository"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func GetAllSiswa(search string, kelasID string, guruID string) ([]model.Siswa, error) {
@@ -24,10 +26,26 @@ func GetSiswaByID(id uint) (model.Siswa, error) {
 	return repository.GetSiswaByID(id)
 }
 
-func GenerateRandomPassword() string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	num := r.Intn(90000) + 10000 // Generates a number between 10000 and 99999
-	return fmt.Sprintf("STD-%d", num)
+func GenerateNISWithTx(tx *gorm.DB) (string, error) {
+	var latestSiswa model.Siswa
+	err := tx.Set("gorm:query_option", "FOR UPDATE").
+		Unscoped().
+		Order("nis desc").
+		First(&latestSiswa).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return "20260001", nil
+		}
+		return "", fmt.Errorf("ERR_GENERATE_NIS: %v", err)
+	}
+
+	seq, err := strconv.ParseInt(latestSiswa.NIS, 10, 64)
+	if err != nil {
+		return "20260001", nil
+	}
+
+	return fmt.Sprintf("%d", seq+1), nil
 }
 
 func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
@@ -40,7 +58,7 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 	}()
 
 	// 1. Auto generate NIS using safe database lock transaction
-	nis, err := repository.GenerateNISWithTx(tx)
+	nis, err := GenerateNISWithTx(tx)
 	if err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", err
@@ -53,39 +71,78 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 		return model.Siswa{}, "", err
 	}
 
-	// 3. Use default onboarding password
-	plainPassword := "SISWA123"
+	// Generate student email dynamically based on NIS suffix
+	var seq int
+	if len(data.NIS) >= 4 {
+		seqStr := data.NIS[len(data.NIS)-4:]
+		seq, _ = strconv.Atoi(seqStr)
+	}
+	if seq == 0 {
+		seq = 1
+	}
+	email := fmt.Sprintf("siswa%03d@sekolah.com", seq)
+
+	// Check if NIS already exists
+	var exists int64
+	if err := tx.Model(&model.Siswa{}).Where("nis = ?", data.NIS).Count(&exists).Error; err != nil {
+		tx.Rollback()
+		return model.Siswa{}, "", fmt.Errorf("ERR_GENERATE_NIS: Gagal memeriksa keunikan NIS: %v", err)
+	}
+	if exists > 0 {
+		tx.Rollback()
+		return model.Siswa{}, "", errors.New("ERR_IDENTIFIER_DUPLICATE: NIS sudah terdaftar")
+	}
+
+	// Check if Email already exists
+	var emailCount int64
+	if err := tx.Model(&authModel.User{}).Where("email = ?", email).Count(&emailCount).Error; err != nil {
+		tx.Rollback()
+		return model.Siswa{}, "", fmt.Errorf("ERR_GENERATE_NIS: Gagal memeriksa keunikan email: %v", err)
+	}
+	if emailCount > 0 {
+		tx.Rollback()
+		return model.Siswa{}, "", errors.New("ERR_EMAIL_DUPLICATE: Email sudah terdaftar")
+	}
+
+	// 3. Set default password
+	plainPassword := "Siswa123!"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", err
 	}
 
-	// 4. Create auth user record (Email is NULL for student)
+	// 4. Create auth user record
 	user := authModel.User{
 		Nama:         data.Nama,
-		Email:        nil,
+		Email:        &email,
 		Password:     string(hashedPassword),
 		Role:         "siswa",
-		IsFirstLogin: true, // Required for force change password
+		IsFirstLogin: true,
 	}
 
 	if err := tx.Create(&user).Error; err != nil {
 		tx.Rollback()
-		return model.Siswa{}, "", errors.New("gagal membuat akun user untuk siswa: " + err.Error())
+		return model.Siswa{}, "", errors.New("ERR_EMAIL_DUPLICATE: gagal membuat akun user untuk siswa: " + err.Error())
 	}
 
 	// 5. Link User ID to Siswa record and save Siswa
 	data.UserID = user.ID
 	if err := tx.Create(&data).Error; err != nil {
 		tx.Rollback()
-		return model.Siswa{}, "", errors.New("gagal menyimpan data siswa: " + err.Error())
+		return model.Siswa{}, "", errors.New("ERR_GENERATE_NIS: gagal menyimpan data siswa: " + err.Error())
 	}
 
 	// Commit Transaction
 	if err := tx.Commit().Error; err != nil {
 		return model.Siswa{}, "", err
 	}
+
+	// LOG Student Created Info
+	log.Printf("[INFO] Action: Student Created | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), data.Nama, data.NIS, email)
+
+	// Preload class info for response
+	config.DB.Preload("Kelas").First(&data, data.ID)
 
 	return data, plainPassword, nil
 }

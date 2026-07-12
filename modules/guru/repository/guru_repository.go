@@ -133,10 +133,11 @@ func IsNotFoundError(err error) bool {
 }
 
 func GenerateNIPWithTx(tx *gorm.DB) (string, error) {
-	prefix := "GURU"
+	prefix := "GR"
 
 	var latestGuru model.Guru
 	err := tx.Set("gorm:query_option", "FOR UPDATE").
+		Unscoped().
 		Where("nip LIKE ?", prefix+"%").
 		Order("nip desc").
 		First(&latestGuru).Error
@@ -145,7 +146,7 @@ func GenerateNIPWithTx(tx *gorm.DB) (string, error) {
 		if err == gorm.ErrRecordNotFound {
 			return prefix + "0001", nil
 		}
-		return "", err
+		return "", fmt.Errorf("ERR_GENERATE_NIG: %v", err)
 	}
 
 	var seq int

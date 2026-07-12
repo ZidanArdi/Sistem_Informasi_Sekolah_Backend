@@ -16,6 +16,7 @@ import (
 	perizinanRoute "backend/modules/perizinan/route"
 	dashboardRoute "backend/modules/dashboard/route"
 	userRoute "backend/modules/user/route"
+	schoolRoute "backend/modules/school/route"
 
 	"io"
 	"net/http"
@@ -79,6 +80,7 @@ func main() {
 	nilaiRoute.NilaiRoute(api)
 	perizinanRoute.PerizinanRoute(api)
 	userRoute.UserRoute(api)
+	schoolRoute.SchoolRoute(api)
 
 	// test route
 	app.Get("/", func(c *fiber.Ctx) error {
