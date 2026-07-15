@@ -37,6 +37,19 @@ func JWTProtected(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, fiber.StatusForbidden, "ERR_FIRST_LOGIN: FORCE_PASSWORD_CHANGE: Anda wajib mengubah password default terlebih dahulu")
 	}
 
+	// Initialize Lightweight TeacherContext
+	if claims.Role == "guru" {
+		var guruID uint
+		config.DB.Table("gurus").Select("id").Where("user_id = ? AND deleted_at IS NULL", claims.UserID).Row().Scan(&guruID)
+		
+		teacherCtx := map[string]interface{}{
+			"UserID": claims.UserID,
+			"GuruID": guruID,
+			"Role":   claims.Role,
+		}
+		c.Locals("teacher_context", teacherCtx)
+	}
+
 	return c.Next()
 }
 

@@ -1,16 +1,21 @@
 package repository
 
 import (
-	"backend/config"
-	"backend/modules/guru/model"
 	"fmt"
+
+	"backend/config"
+	authModel "backend/modules/auth/model"
+	"backend/modules/guru/model"
 
 	"gorm.io/gorm"
 )
 
+func BeginTransaction() *gorm.DB {
+	return config.DB.Begin()
+}
+
 func GetAllGuru(search string) ([]model.Guru, error) {
 	var guru []model.Guru
-
 	query := config.DB.Preload("User")
 	if search != "" {
 		query = query.Where("nama ILIKE ? OR nip ILIKE ?", "%"+search+"%", "%"+search+"%")
@@ -26,7 +31,6 @@ func GetAllGuru(search string) ([]model.Guru, error) {
 		config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru[i].ID).Pluck("mapel_id", &mapelIDs)
 		guru[i].MapelIDs = mapelIDs
 	}
-
 	return guru, nil
 }
 
@@ -40,13 +44,7 @@ func GetGuruByID(id uint) (model.Guru, error) {
 	var mapelIDs []uint
 	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru.ID).Pluck("mapel_id", &mapelIDs)
 	guru.MapelIDs = mapelIDs
-
 	return guru, nil
-}
-
-func CreateGuru(data model.Guru) (model.Guru, error) {
-	result := config.DB.Create(&data)
-	return data, result.Error
 }
 
 func UpdateGuru(id uint, data model.Guru) (model.Guru, error) {
@@ -78,7 +76,6 @@ func UpdateGuru(id uint, data model.Guru) (model.Guru, error) {
 		return guru, err
 	}
 
-	// Sync GuruMapel relations: delete old, insert new
 	if err := tx.Where("guru_id = ?", id).Delete(&model.GuruMapel{}).Error; err != nil {
 		tx.Rollback()
 		return guru, err
@@ -99,22 +96,17 @@ func UpdateGuru(id uint, data model.Guru) (model.Guru, error) {
 	}
 
 	config.DB.Preload("User").First(&guru, guru.ID)
-	
-	// Reload mapped MapelIDs
 	var mapelIDs []uint
 	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru.ID).Pluck("mapel_id", &mapelIDs)
 	guru.MapelIDs = mapelIDs
-
 	return guru, nil
 }
 
 func DeleteGuru(id uint) error {
 	var guru model.Guru
-
 	if err := config.DB.First(&guru, id).Error; err != nil {
 		return err
 	}
-
 	return config.DB.Delete(&guru).Error
 }
 
@@ -134,7 +126,6 @@ func IsNotFoundError(err error) bool {
 
 func GenerateNIPWithTx(tx *gorm.DB) (string, error) {
 	prefix := "GR"
-
 	var latestGuru model.Guru
 	err := tx.Set("gorm:query_option", "FOR UPDATE").
 		Unscoped().
@@ -156,4 +147,41 @@ func GenerateNIPWithTx(tx *gorm.DB) (string, error) {
 	}
 
 	return fmt.Sprintf("%s%04d", prefix, seq+1), nil
+}
+
+func CountUserByEmail(email string) (int64, error) {
+	var count int64
+	err := config.DB.Model(&authModel.User{}).Where("email = ?", email).Count(&count).Error
+	return count, err
+}
+
+func CountUserByEmailWithTx(tx *gorm.DB, email string) (int64, error) {
+	var count int64
+	err := tx.Model(&authModel.User{}).Where("email = ?", email).Count(&count).Error
+	return count, err
+}
+
+func CountGuruByNIPWithTx(tx *gorm.DB, nip string) (int64, error) {
+	var count int64
+	err := tx.Model(&model.Guru{}).Where("nip = ?", nip).Count(&count).Error
+	return count, err
+}
+
+func CreateUserWithTx(tx *gorm.DB, user *authModel.User) error {
+	return tx.Create(user).Error
+}
+
+func CreateGuruWithTx(tx *gorm.DB, guru *model.Guru) error {
+	return tx.Create(guru).Error
+}
+
+func CreateGuruMapelWithTx(tx *gorm.DB, gm *model.GuruMapel) error {
+	return tx.Create(gm).Error
+}
+
+func LoadGuruRelations(guru *model.Guru) {
+	config.DB.Preload("User").First(guru, guru.ID)
+	var mapelIDs []uint
+	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru.ID).Pluck("mapel_id", &mapelIDs)
+	guru.MapelIDs = mapelIDs
 }

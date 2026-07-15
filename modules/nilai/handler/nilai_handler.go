@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"backend/helpers"
+	academicModel "backend/modules/academic/model"
 	"backend/modules/nilai/model"
 	"backend/modules/nilai/repository"
 	"backend/modules/nilai/service"
@@ -11,16 +12,33 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func getTeacherContext(c *fiber.Ctx) academicModel.TeacherContext {
+	var teacherCtx academicModel.TeacherContext
+	if tc, ok := c.Locals("teacher_context").(map[string]interface{}); ok {
+		teacherCtx = academicModel.TeacherContext{
+			UserID: tc["UserID"].(uint),
+			GuruID: tc["GuruID"].(uint),
+			Role:   tc["Role"].(string),
+		}
+	} else {
+		if role, ok := c.Locals("role").(string); ok {
+			teacherCtx.Role = role
+		}
+		if userID, ok := c.Locals("user_id").(uint); ok {
+			teacherCtx.UserID = userID
+		}
+	}
+	return teacherCtx
+}
+
 func GetAllNilai(c *fiber.Ctx) error {
-	userID, ok := c.Locals("user_id").(uint)
-	role, okRole := c.Locals("role").(string)
-	if !ok || !okRole {
+	teacherCtx := getTeacherContext(c)
+	if teacherCtx.UserID == 0 {
 		return helpers.ErrorResponse(c, 401, "User tidak valid")
 	}
 
 	data, err := service.GetAllNilai(
-		userID,
-		role,
+		teacherCtx,
 		c.Query("siswa_id"),
 		c.Query("kelas_id"),
 		c.Query("mapel_id"),
@@ -51,9 +69,8 @@ func GetNilaiByID(c *fiber.Ctx) error {
 }
 
 func CreateNilai(c *fiber.Ctx) error {
-	userID, ok := c.Locals("user_id").(uint)
-	role, okRole := c.Locals("role").(string)
-	if !ok || !okRole {
+	teacherCtx := getTeacherContext(c)
+	if teacherCtx.UserID == 0 {
 		return helpers.ErrorResponse(c, 401, "User tidak valid")
 	}
 
@@ -62,7 +79,7 @@ func CreateNilai(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "Input tidak valid")
 	}
 
-	data, err := service.CreateNilai(userID, role, nilai)
+	data, err := service.CreateNilai(teacherCtx, nilai)
 	if err != nil {
 		return helpers.ErrorResponse(c, 400, err.Error())
 	}
@@ -75,9 +92,8 @@ func CreateNilai(c *fiber.Ctx) error {
 }
 
 func UpdateNilai(c *fiber.Ctx) error {
-	userID, ok := c.Locals("user_id").(uint)
-	role, okRole := c.Locals("role").(string)
-	if !ok || !okRole {
+	teacherCtx := getTeacherContext(c)
+	if teacherCtx.UserID == 0 {
 		return helpers.ErrorResponse(c, 401, "User tidak valid")
 	}
 
@@ -91,7 +107,7 @@ func UpdateNilai(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "Input tidak valid")
 	}
 
-	data, err := service.UpdateNilai(uint(id), userID, role, nilai)
+	data, err := service.UpdateNilai(uint(id), teacherCtx, nilai)
 	if err != nil {
 		if repository.IsNotFoundError(err) {
 			return helpers.ErrorResponse(c, 404, "Nilai tidak ditemukan")
@@ -103,8 +119,8 @@ func UpdateNilai(c *fiber.Ctx) error {
 }
 
 func DeleteNilai(c *fiber.Ctx) error {
-	role, okRole := c.Locals("role").(string)
-	if !okRole {
+	teacherCtx := getTeacherContext(c)
+	if teacherCtx.UserID == 0 {
 		return helpers.ErrorResponse(c, 401, "User tidak valid")
 	}
 
@@ -113,7 +129,7 @@ func DeleteNilai(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "ID nilai tidak valid")
 	}
 
-	err = service.DeleteNilai(uint(id), role)
+	err = service.DeleteNilai(uint(id), teacherCtx)
 	if err != nil {
 		if repository.IsNotFoundError(err) {
 			return helpers.ErrorResponse(c, 404, "Nilai tidak ditemukan")

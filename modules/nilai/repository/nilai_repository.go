@@ -93,3 +93,45 @@ func DeleteNilai(id uint) error {
 func IsNotFoundError(err error) bool {
 	return err == gorm.ErrRecordNotFound
 }
+
+func GetSiswaKelasID(siswaID uint) (uint, error) {
+	var siswa struct {
+		KelasID uint
+	}
+	err := config.DB.Table("siswas").Select("kelas_id").Where("id = ? AND deleted_at IS NULL", siswaID).Scan(&siswa).Error
+	if err != nil || siswa.KelasID == 0 {
+		return 0, gorm.ErrRecordNotFound
+	}
+	return siswa.KelasID, nil
+}
+
+func CheckExistingNilai(siswaID, mapelID uint, semester, tahunAjaran string) (model.Nilai, error) {
+	var existing model.Nilai
+	err := config.DB.Where("siswa_id = ? AND mapel_id = ? AND semester = ? AND tahun_ajaran = ?",
+		siswaID, mapelID, semester, tahunAjaran).First(&existing).Error
+	return existing, err
+}
+
+func GetSiswaIDByUserID(userID uint) (uint, error) {
+	var siswa struct {
+		ID uint
+	}
+	err := config.DB.Table("siswas").Select("id").Where("user_id = ?", userID).Scan(&siswa).Error
+	return siswa.ID, err
+}
+
+func SaveNilai(existing model.Nilai, data model.Nilai) (model.Nilai, error) {
+	existing.KelasID = data.KelasID
+	existing.GuruID = data.GuruID
+	existing.Tugas = data.Tugas
+	existing.UTS = data.UTS
+	existing.UAS = data.UAS
+	existing.NilaiAkhir = data.NilaiAkhir
+	existing.GradeHuruf = data.GradeHuruf
+	
+	if errSave := config.DB.Save(&existing).Error; errSave != nil {
+		return model.Nilai{}, errSave
+	}
+	config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Mapel").Preload("Guru").First(&existing, existing.ID)
+	return existing, nil
+}

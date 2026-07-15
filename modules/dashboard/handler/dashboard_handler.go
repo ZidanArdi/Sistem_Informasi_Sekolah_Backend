@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"backend/helpers"
+	academicModel "backend/modules/academic/model"
 	"backend/modules/dashboard/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -70,26 +71,33 @@ func GetAdminDashboard(c *fiber.Ctx) error {
 }
 
 func GetGuruDashboard(c *fiber.Ctx) error {
-	userIDLocal := c.Locals("user_id")
-	if userIDLocal == nil {
+	teacherCtxLocal := c.Locals("teacher_context")
+	if teacherCtxLocal == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
 			"code":    "ERR_UNAUTHORIZED",
-			"message": "Token tidak ditemukan atau tidak valid",
-			"data":    nil,
-		})
-	}
-	userID, ok := userIDLocal.(uint)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"code":    "ERR_UNAUTHORIZED",
-			"message": "Format UserID dalam token tidak valid",
+			"message": "Token tidak valid atau akses ditolak",
 			"data":    nil,
 		})
 	}
 
-	data, err := service.GetGuruDashboard(userID)
+	teacherCtxMap, ok := teacherCtxLocal.(map[string]interface{})
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"code":    "ERR_UNAUTHORIZED",
+			"message": "Format Teacher Context tidak valid",
+			"data":    nil,
+		})
+	}
+
+	teacherCtx := academicModel.TeacherContext{
+		UserID: teacherCtxMap["UserID"].(uint),
+		GuruID: teacherCtxMap["GuruID"].(uint),
+		Role:   teacherCtxMap["Role"].(string),
+	}
+
+	data, err := service.GetGuruDashboard(teacherCtx)
 	if err != nil {
 		return sendError(c, fiber.StatusForbidden, err)
 	}

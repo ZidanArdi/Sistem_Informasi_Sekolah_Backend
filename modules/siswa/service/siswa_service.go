@@ -5,73 +5,62 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"backend/config"
+	academicModel "backend/modules/academic/model"
+	academicService "backend/modules/academic/service"
 	authModel "backend/modules/auth/model"
-	kelasModel "backend/modules/kelas/model"
 	"backend/modules/siswa/model"
 	"backend/modules/siswa/repository"
 
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
-func GetAllSiswa(search string, kelasID string, guruID string) ([]model.Siswa, error) {
-	return repository.GetAllSiswa(search, kelasID, guruID)
+func GetAllSiswa(ctx academicModel.TeacherContext, search string, kelasID string) ([]model.Siswa, error) {
+	if ctx.Role == "guru" {
+		// If teacher, only return students taught by this teacher.
+		// If kelasID is provided, filter by that as well.
+		if kelasID != "" {
+			parsedKelas, _ := strconv.Atoi(kelasID)
+			return academicService.GetStudentsByTeacherAndClass(ctx, uint(parsedKelas))
+		}
+		return academicService.GetStudentsByTeacher(ctx)
+	}
+
+	// For admin/other roles
+	return repository.GetAllSiswa(search, kelasID, "")
 }
 
-func GetSiswaByID(id uint) (model.Siswa, error) {
+func GetSiswaByID(ctx academicModel.TeacherContext, id uint) (model.Siswa, error) {
+	if ctx.Role == "guru" {
+		if err := academicService.CanViewStudent(ctx, id); err != nil {
+			return model.Siswa{}, err
+		}
+	}
 	return repository.GetSiswaByID(id)
 }
 
-func GenerateNISWithTx(tx *gorm.DB) (string, error) {
-	var latestSiswa model.Siswa
-	err := tx.Set("gorm:query_option", "FOR UPDATE").
-		Unscoped().
-		Order("nis desc").
-		First(&latestSiswa).Error
-
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return "20260001", nil
-		}
-		return "", fmt.Errorf("ERR_GENERATE_NIS: %v", err)
-	}
-
-	seq, err := strconv.ParseInt(latestSiswa.NIS, 10, 64)
-	if err != nil {
-		return "20260001", nil
-	}
-
-	return fmt.Sprintf("%d", seq+1), nil
-}
-
 func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
-	// Start Database Transaction
-	tx := config.DB.Begin()
+	tx := repository.BeginTransaction()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
 
-	// 1. Auto generate NIS using safe database lock transaction
-	nis, err := GenerateNISWithTx(tx)
+	nis, err := repository.GenerateNISWithTx(tx)
 	if err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", err
 	}
 	data.NIS = nis
 
-	// 2. Validate siswa input fields
 	if err := validateSiswa(data); err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", err
 	}
 
-	// Generate student email dynamically based on NIS suffix
 	var seq int
 	if len(data.NIS) >= 4 {
 		seqStr := data.NIS[len(data.NIS)-4:]
@@ -82,9 +71,8 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 	}
 	email := fmt.Sprintf("siswa%03d@sekolah.com", seq)
 
-	// Check if NIS already exists
-	var exists int64
-	if err := tx.Model(&model.Siswa{}).Where("nis = ?", data.NIS).Count(&exists).Error; err != nil {
+	exists, err := repository.CountSiswaByNISWithTx(tx, data.NIS)
+	if err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", fmt.Errorf("ERR_GENERATE_NIS: Gagal memeriksa keunikan NIS: %v", err)
 	}
@@ -93,9 +81,8 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 		return model.Siswa{}, "", errors.New("ERR_IDENTIFIER_DUPLICATE: NIS sudah terdaftar")
 	}
 
-	// Check if Email already exists
-	var emailCount int64
-	if err := tx.Model(&authModel.User{}).Where("email = ?", email).Count(&emailCount).Error; err != nil {
+	emailCount, err := repository.CountUserByEmailWithTx(tx, email)
+	if err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", fmt.Errorf("ERR_GENERATE_NIS: Gagal memeriksa keunikan email: %v", err)
 	}
@@ -104,7 +91,6 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 		return model.Siswa{}, "", errors.New("ERR_EMAIL_DUPLICATE: Email sudah terdaftar")
 	}
 
-	// 3. Set default password
 	plainPassword := "Siswa123!"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -112,7 +98,6 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 		return model.Siswa{}, "", err
 	}
 
-	// 4. Create auth user record
 	user := authModel.User{
 		Nama:         data.Nama,
 		Email:        &email,
@@ -121,29 +106,26 @@ func CreateSiswa(data model.Siswa) (model.Siswa, string, error) {
 		IsFirstLogin: true,
 	}
 
-	if err := tx.Create(&user).Error; err != nil {
+	if err := repository.CreateUserWithTx(tx, &user); err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", errors.New("ERR_EMAIL_DUPLICATE: gagal membuat akun user untuk siswa: " + err.Error())
 	}
 
-	// 5. Link User ID to Siswa record and save Siswa
 	data.UserID = user.ID
-	if err := tx.Create(&data).Error; err != nil {
+	if err := repository.CreateSiswaWithTx(tx, data); err != nil {
 		tx.Rollback()
 		return model.Siswa{}, "", errors.New("ERR_GENERATE_NIS: gagal menyimpan data siswa: " + err.Error())
 	}
 
-	// Commit Transaction
 	if err := tx.Commit().Error; err != nil {
 		return model.Siswa{}, "", err
 	}
 
-	// LOG Student Created Info
-	log.Printf("[INFO] Action: Student Created | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), data.Nama, data.NIS, email)
+	if config.Debug {
+		log.Printf("[INFO] Action: Student Created | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), data.Nama, data.NIS, email)
+	}
 
-	// Preload class info for response
-	config.DB.Preload("Kelas").First(&data, data.ID)
-
+	repository.LoadSiswaRelations(&data)
 	return data, plainPassword, nil
 }
 
@@ -159,29 +141,19 @@ func DeleteSiswa(id uint) error {
 }
 
 func validateSiswa(data model.Siswa) error {
-	if strings.TrimSpace(data.Nama) == "" ||
-		strings.TrimSpace(data.JenisKelamin) == "" ||
-		strings.TrimSpace(data.TanggalLahir) == "" ||
-		strings.TrimSpace(data.Provinsi) == "" ||
-		strings.TrimSpace(data.Kabupaten) == "" ||
-		strings.TrimSpace(data.Kecamatan) == "" ||
-		strings.TrimSpace(data.Desa) == "" ||
-		strings.TrimSpace(data.AlamatDetail) == "" ||
-		data.KelasID == 0 {
+	if data.Nama == "" || data.JenisKelamin == "" || data.TanggalLahir == "" ||
+		data.Provinsi == "" || data.Kabupaten == "" || data.Kecamatan == "" ||
+		data.Desa == "" || data.AlamatDetail == "" || data.KelasID == 0 {
 		return errors.New("nama, jenis_kelamin, tanggal_lahir, provinsi, kabupaten, kecamatan, desa, alamat_detail, dan kelas_id wajib diisi")
 	}
 
-	var kelas kelasModel.Kelas
-	if err := config.DB.First(&kelas, data.KelasID).Error; err != nil {
+	kelas, err := repository.GetKelasByID(data.KelasID)
+	if err != nil {
 		return errors.New("kelas tidak ditemukan")
 	}
 
-	var count int64
-	query := config.DB.Model(&model.Siswa{}).Where("kelas_id = ?", data.KelasID)
-	if data.ID != 0 {
-		query = query.Where("id != ?", data.ID)
-	}
-	if err := query.Count(&count).Error; err != nil {
+	count, err := repository.CountSiswaByKelasExcludeID(data.KelasID, data.ID)
+	if err != nil {
 		return err
 	}
 

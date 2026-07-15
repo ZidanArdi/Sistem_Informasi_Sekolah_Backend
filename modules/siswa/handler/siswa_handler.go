@@ -9,15 +9,29 @@ import (
 	"backend/modules/siswa/service"
 
 	"github.com/gofiber/fiber/v2"
+	academicModel "backend/modules/academic/model"
 )
 
 func GetAllSiswa(c *fiber.Ctx) error {
 
 	search := c.Query("search")
 	kelasID := c.Query("kelas_id")
-	guruID := c.Query("guru_id")
+	
+	var teacherCtx academicModel.TeacherContext
+	if tc, ok := c.Locals("teacher_context").(map[string]interface{}); ok {
+		teacherCtx = academicModel.TeacherContext{
+			UserID: tc["UserID"].(uint),
+			GuruID: tc["GuruID"].(uint),
+			Role:   tc["Role"].(string),
+		}
+	} else {
+		// Fallback for non-guru users or if context not set
+		if role, ok := c.Locals("role").(string); ok {
+			teacherCtx.Role = role
+		}
+	}
 
-	data, err := service.GetAllSiswa(search, kelasID, guruID)
+	data, err := service.GetAllSiswa(teacherCtx, search, kelasID)
 
 	if err != nil {
 		return helpers.ErrorResponse(c, 500, "Gagal mengambil data siswa")
@@ -33,7 +47,20 @@ func GetSiswaByID(c *fiber.Ctx) error {
 		return helpers.ErrorResponse(c, 400, "ID siswa tidak valid")
 	}
 
-	data, err := service.GetSiswaByID(uint(id))
+	var teacherCtx academicModel.TeacherContext
+	if tc, ok := c.Locals("teacher_context").(map[string]interface{}); ok {
+		teacherCtx = academicModel.TeacherContext{
+			UserID: tc["UserID"].(uint),
+			GuruID: tc["GuruID"].(uint),
+			Role:   tc["Role"].(string),
+		}
+	} else {
+		if role, ok := c.Locals("role").(string); ok {
+			teacherCtx.Role = role
+		}
+	}
+
+	data, err := service.GetSiswaByID(teacherCtx, uint(id))
 
 	if err != nil {
 

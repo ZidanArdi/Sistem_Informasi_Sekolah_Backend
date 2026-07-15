@@ -51,8 +51,7 @@ func GenerateGuruEmail(nama string) (string, error) {
 	emailDomain := "@sekolah.com"
 	email := baseEmail + emailDomain
 
-	var count int64
-	err = config.DB.Model(&authModel.User{}).Where("email = ?", email).Count(&count).Error
+	count, err := repository.CountUserByEmail(email)
 	if err != nil {
 		return "", err
 	}
@@ -63,7 +62,7 @@ func GenerateGuruEmail(nama string) (string, error) {
 	suffix := 1
 	for {
 		emailWithSuffix := fmt.Sprintf("%s%02d%s", baseEmail, suffix, emailDomain)
-		err = config.DB.Model(&authModel.User{}).Where("email = ?", emailWithSuffix).Count(&count).Error
+		count, err = repository.CountUserByEmail(emailWithSuffix)
 		if err != nil {
 			return "", err
 		}
@@ -75,15 +74,13 @@ func GenerateGuruEmail(nama string) (string, error) {
 }
 
 func CreateGuru(data model.Guru) (model.Guru, string, error) {
-	// Start Database Transaction
-	tx := config.DB.Begin()
+	tx := repository.BeginTransaction()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
 
-	// 1. Auto generate NIP with transaction lock
 	nip, err := repository.GenerateNIPWithTx(tx)
 	if err != nil {
 		tx.Rollback()
@@ -91,7 +88,6 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 	}
 	data.NIP = nip
 
-	// 2. Auto generate Email based on NIG (data.NIP)
 	var email string
 	var seq int
 	if len(data.NIP) >= 4 {
@@ -107,15 +103,13 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		email = fmt.Sprintf("guru%02d@sekolah.com", seq)
 	}
 
-	// Validate fields
 	if err := validateGuru(data); err != nil {
 		tx.Rollback()
 		return model.Guru{}, "", err
 	}
 
-	// Check if NIG already exists
-	var exists int64
-	if err := tx.Model(&model.Guru{}).Where("nip = ?", data.NIP).Count(&exists).Error; err != nil {
+	exists, err := repository.CountGuruByNIPWithTx(tx, data.NIP)
+	if err != nil {
 		tx.Rollback()
 		return model.Guru{}, "", fmt.Errorf("ERR_GENERATE_NIG: Gagal memeriksa keunikan NIG: %v", err)
 	}
@@ -124,9 +118,8 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		return model.Guru{}, "", errors.New("ERR_IDENTIFIER_DUPLICATE: NIG sudah terdaftar")
 	}
 
-	// Check if Email already exists
-	var emailCount int64
-	if err := tx.Model(&authModel.User{}).Where("email = ?", email).Count(&emailCount).Error; err != nil {
+	emailCount, err := repository.CountUserByEmailWithTx(tx, email)
+	if err != nil {
 		tx.Rollback()
 		return model.Guru{}, "", fmt.Errorf("ERR_GENERATE_NIG: Gagal memeriksa keunikan email: %v", err)
 	}
@@ -135,7 +128,6 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		return model.Guru{}, "", errors.New("ERR_EMAIL_DUPLICATE: Email sudah terdaftar")
 	}
 
-	// 3. Set default password
 	plainPassword := "Guru123!"
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -143,7 +135,6 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		return model.Guru{}, "", err
 	}
 
-	// 4. Create User record (Guru forces change password, so is_first_login = true)
 	user := authModel.User{
 		Nama:         data.Nama,
 		Email:        &email,
@@ -152,44 +143,36 @@ func CreateGuru(data model.Guru) (model.Guru, string, error) {
 		IsFirstLogin: true,
 	}
 
-	if err := tx.Create(&user).Error; err != nil {
+	if err := repository.CreateUserWithTx(tx, &user); err != nil {
 		tx.Rollback()
 		return model.Guru{}, "", errors.New("ERR_EMAIL_DUPLICATE: gagal membuat akun user untuk guru: " + err.Error())
 	}
 
-	// 5. Link User ID to Guru record and save Guru
 	data.UserID = user.ID
-	if err := tx.Create(&data).Error; err != nil {
+	if err := repository.CreateGuruWithTx(tx, &data); err != nil {
 		tx.Rollback()
 		return model.Guru{}, "", errors.New("ERR_GENERATE_NIG: gagal menyimpan data guru: " + err.Error())
 	}
 
-	// 6. Create GuruMapel relations
 	if len(data.MapelIDs) > 0 {
 		for _, mapelID := range data.MapelIDs {
 			gm := model.GuruMapel{GuruID: data.ID, MapelID: mapelID}
-			if err := tx.Create(&gm).Error; err != nil {
+			if err := repository.CreateGuruMapelWithTx(tx, &gm); err != nil {
 				tx.Rollback()
 				return model.Guru{}, "", errors.New("ERR_GENERATE_NIG: gagal menyimpan relasi guru mapel: " + err.Error())
 			}
 		}
 	}
 
-	// Commit Transaction
 	if err := tx.Commit().Error; err != nil {
 		return model.Guru{}, "", err
 	}
 
-	// LOG Teacher Created Info
-	log.Printf("[INFO] Action: Teacher Created | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), data.Nama, data.NIP, email)
+	if config.Debug {
+		log.Printf("[INFO] Action: Teacher Created | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), data.Nama, data.NIP, email)
+	}
 
-	config.DB.Preload("User").First(&data, data.ID)
-	
-	// Reload mapped MapelIDs
-	var mapelIDs []uint
-	config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", data.ID).Pluck("mapel_id", &mapelIDs)
-	data.MapelIDs = mapelIDs
-
+	repository.LoadGuruRelations(&data)
 	return data, plainPassword, nil
 }
 
