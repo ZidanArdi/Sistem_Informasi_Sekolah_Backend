@@ -11,6 +11,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetAllKelas godoc
+// @Summary Ambil semua data kelas
+// @Description Mengambil seluruh data kelas. Mendukung pencarian nama kelas dan filter tingkat.
+// @Tags Kelas
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param search query string false "Cari berdasarkan nama kelas"
+// @Param tingkat query string false "Filter tingkat kelas (e.g. X, XI, XII)"
+// @Success 200 {object} model.KelasResponseList
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/kelas/ [get]
 func GetAllKelas(c *fiber.Ctx) error {
 	data, err := service.GetAllKelas(c.Query("search"), c.Query("tingkat"))
 	if err != nil {
@@ -19,6 +32,20 @@ func GetAllKelas(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil data kelas", data)
 }
 
+// GetKelasByID godoc
+// @Summary Ambil data kelas berdasarkan ID
+// @Description Mengambil detail data satu kelas berdasarkan ID.
+// @Tags Kelas
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Kelas"
+// @Success 200 {object} model.KelasResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/kelas/{id} [get]
 func GetKelasByID(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -36,6 +63,19 @@ func GetKelasByID(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil detail kelas", data)
 }
 
+// CreateKelas godoc
+// @Summary Tambah data kelas
+// @Description Menambahkan data kelas baru.
+// @Tags Kelas
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body model.Kelas true "Payload data kelas"
+// @Success 201 {object} model.KelasResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/kelas/ [post]
 func CreateKelas(c *fiber.Ctx) error {
 	var kelas model.Kelas
 	if err := c.BodyParser(&kelas); err != nil {
@@ -54,6 +94,21 @@ func CreateKelas(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateKelas godoc
+// @Summary Ubah data kelas
+// @Description Mengubah data kelas berdasarkan ID.
+// @Tags Kelas
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Kelas"
+// @Param request body model.Kelas true "Payload data kelas"
+// @Success 200 {object} model.KelasResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/kelas/{id} [put]
 func UpdateKelas(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -76,6 +131,21 @@ func UpdateKelas(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Kelas berhasil diupdate", data)
 }
 
+// DeleteKelas godoc
+// @Summary Hapus data kelas
+// @Description Menghapus data kelas berdasarkan ID. Hanya dapat diakses oleh Admin.
+// @Tags Kelas
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Kelas"
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/kelas/{id} [delete]
 func DeleteKelas(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {

@@ -8,6 +8,17 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetSchoolProfile godoc
+// @Summary Ambil profil sekolah
+// @Description Mengambil informasi profil sekolah (ID=1). Jika belum ada di database, akan mengembalikan profil default.
+// @Tags School Profile
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.SchoolResponseSingle
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/school-profile/ [get]
 func GetSchoolProfile(c *fiber.Ctx) error {
 	var profile model.SchoolProfile
 	// Always look up the record with ID = 1
@@ -49,6 +60,20 @@ func GetSchoolProfile(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil profil sekolah", profile)
 }
 
+// UpdateSchoolProfile godoc
+// @Summary Perbarui profil sekolah
+// @Description Memperbarui data profil sekolah (ID=1). Hanya dapat diakses oleh Admin.
+// @Tags School Profile
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body model.SchoolProfile true "Payload profil sekolah"
+// @Success 200 {object} model.SchoolResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/school-profile/ [put]
 func UpdateSchoolProfile(c *fiber.Ctx) error {
 	var input model.SchoolProfile
 	if err := c.BodyParser(&input); err != nil {

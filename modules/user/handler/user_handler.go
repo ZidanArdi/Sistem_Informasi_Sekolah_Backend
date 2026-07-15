@@ -13,17 +13,29 @@ import (
 )
 
 type UserResponse struct {
-	ID         uint   `json:"id"`
-	Name       string `json:"name"`
-	Role       string `json:"role"`
-	Identifier string `json:"identifier"`
-	IsActive   bool   `json:"is_active"`
+	ID         uint   `json:"id" example:"1"`
+	Name       string `json:"name" example:"Ahmad Guru"`
+	Role       string `json:"role" example:"guru"`
+	Identifier string `json:"identifier" example:"GR001"`
+	IsActive   bool   `json:"is_active" example:"true"`
 }
 
 type UpdateStatusInput struct {
-	IsActive *bool `json:"is_active" xml:"is_active" form:"is_active"`
+	IsActive *bool `json:"is_active" example:"true"`
 }
 
+// GetUsers godoc
+// @Summary Ambil semua data user account
+// @Description Mengambil daftar seluruh user account (Admin, Guru, Siswa) beserta nama asli dan identifier (NIP/NIS/Email). Hanya dapat diakses oleh Admin.
+// @Tags User Management
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} helpers.SwaggerSuccessResponse{data=[]UserResponse}
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/users/ [get]
 func GetUsers(c *fiber.Ctx) error {
 	var users []authModel.User
 	if err := config.DB.Order("id desc").Find(&users).Error; err != nil {
@@ -92,6 +104,22 @@ func GetUsers(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil data user", response)
 }
 
+// UpdateUserStatus godoc
+// @Summary Perbarui status keaktifan user
+// @Description Mengaktifkan atau menonaktifkan user account berdasarkan ID. Hanya dapat diakses oleh Admin. Administrator tidak dapat dinonaktifkan.
+// @Tags User Management
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID User"
+// @Param request body UpdateStatusInput true "Payload status aktif"
+// @Success 200 {object} helpers.SwaggerSuccessResponse{data=authModel.User}
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/users/{id}/status [put]
 func UpdateUserStatus(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -127,6 +155,21 @@ func UpdateUserStatus(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Status user berhasil diperbarui", user)
 }
 
+// ResetUserPassword godoc
+// @Summary Reset password user ke password default
+// @Description Mereset password user berdasarkan ID ke password default berdasarkan role (e.g. Guru123! untuk guru, Siswa123! untuk siswa). Hanya dapat diakses oleh Admin.
+// @Tags User Management
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID User"
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/users/{id}/reset-password [put]
 func ResetUserPassword(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {

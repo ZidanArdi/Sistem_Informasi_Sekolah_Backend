@@ -11,6 +11,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetAllGuru godoc
+// @Summary Ambil semua data guru
+// @Description Mengambil seluruh data guru. Mendukung parameter pencarian.
+// @Tags Guru
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param search query string false "Cari berdasarkan nama atau NIP"
+// @Success 200 {object} model.GuruResponseList
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/guru/ [get]
 func GetAllGuru(c *fiber.Ctx) error {
 	data, err := service.GetAllGuru(c.Query("search"))
 	if err != nil {
@@ -19,6 +31,20 @@ func GetAllGuru(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil data guru", data)
 }
 
+// GetGuruByID godoc
+// @Summary Ambil data guru berdasarkan ID
+// @Description Mengambil detail data satu guru berdasarkan ID.
+// @Tags Guru
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Guru"
+// @Success 200 {object} model.GuruResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/guru/{id} [get]
 func GetGuruByID(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -36,6 +62,19 @@ func GetGuruByID(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil detail guru", data)
 }
 
+// CreateGuru godoc
+// @Summary Tambah data guru
+// @Description Menambahkan data guru baru dan membuat user account dengan password acak sementara.
+// @Tags Guru
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body model.Guru true "Payload data guru"
+// @Success 201 {object} model.GuruResponseCreated
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/guru/ [post]
 func CreateGuru(c *fiber.Ctx) error {
 	var guru model.Guru
 	if err := c.BodyParser(&guru); err != nil {
@@ -55,6 +94,21 @@ func CreateGuru(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateGuru godoc
+// @Summary Ubah data guru
+// @Description Mengubah data guru berdasarkan ID.
+// @Tags Guru
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Guru"
+// @Param request body model.Guru true "Payload data guru"
+// @Success 200 {object} model.GuruResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/guru/{id} [put]
 func UpdateGuru(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -77,6 +131,21 @@ func UpdateGuru(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Guru berhasil diupdate", data)
 }
 
+// DeleteGuru godoc
+// @Summary Hapus data guru
+// @Description Menghapus data guru beserta user account terkait berdasarkan ID. Hanya dapat diakses oleh Admin.
+// @Tags Guru
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Guru"
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/guru/{id} [delete]
 func DeleteGuru(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {

@@ -1,0 +1,2950 @@
+basePath: /
+definitions:
+  handler.ApproveRejectInput:
+    properties:
+      status_persetujuan:
+        example: Disetujui
+        type: string
+    type: object
+  handler.ApproveRejectPerizinanInput:
+    properties:
+      keterangan_guru:
+        example: Izin disetujui, semoga lekas sembuh.
+        type: string
+      status:
+        example: Disetujui
+        type: string
+    type: object
+  handler.BulkSaveInput:
+    properties:
+      records:
+        items:
+          $ref: '#/definitions/model.Absensi'
+        type: array
+      tanggal:
+        example: "2026-07-15"
+        type: string
+    type: object
+  handler.ProfileUpdateInput:
+    properties:
+      alamat_detail:
+        example: Jl. Diponegoro No. 25
+        type: string
+      desa:
+        example: Sidorejo Lor
+        type: string
+      kabupaten:
+        example: Salatiga
+        type: string
+      kecamatan:
+        example: Sidorejo
+        type: string
+      no_hp:
+        example: "081234567890"
+        type: string
+      provinsi:
+        example: Jawa Tengah
+        type: string
+    type: object
+  handler.UpdateStatusInput:
+    properties:
+      is_active:
+        example: true
+        type: boolean
+    type: object
+  handler.UserResponse:
+    properties:
+      id:
+        example: 1
+        type: integer
+      identifier:
+        example: GR001
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: Ahmad Guru
+        type: string
+      role:
+        example: guru
+        type: string
+    type: object
+  helpers.SwaggerError400Response:
+    properties:
+      message:
+        example: Input tidak valid
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  helpers.SwaggerError401Response:
+    properties:
+      message:
+        example: Token tidak ditemukan atau tidak valid
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  helpers.SwaggerError403Response:
+    properties:
+      code:
+        example: ERR_PERMISSION_DENIED
+        type: string
+      message:
+        example: 'Akses ditolak: Anda tidak memiliki akses untuk fitur ini'
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  helpers.SwaggerError404Response:
+    properties:
+      message:
+        example: Data tidak ditemukan
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  helpers.SwaggerError500Response:
+    properties:
+      message:
+        example: Terjadi kesalahan internal pada server
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  helpers.SwaggerSuccessResponse:
+    properties:
+      data: {}
+      message:
+        example: Berhasil memproses data
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Absensi:
+    properties:
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      keterangan:
+        description: detail alasan jika Sakit/Izin
+        example: Hadir tepat waktu
+        type: string
+      siswa:
+        $ref: '#/definitions/model.Siswa'
+      siswa_id:
+        example: 1
+        type: integer
+      status:
+        description: '"Hadir", "Sakit", "Izin", "Alpa"'
+        example: Hadir
+        type: string
+      status_persetujuan:
+        description: '"Pending", "Disetujui", "Ditolak"'
+        example: Disetujui
+        type: string
+      tanggal:
+        description: 'format: YYYY-MM-DD'
+        example: "2026-07-15"
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+    type: object
+  model.AbsensiResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Absensi'
+        type: array
+      message:
+        example: Berhasil mengambil data absensi
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.AbsensiResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Absensi'
+      message:
+        example: Berhasil mengambil detail absensi
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Guru:
+    properties:
+      alamat:
+        description: Deprecated Database Columns (Retained for Non-Destructive Migrations)
+        example: Jl. Diponegoro No. 25
+        type: string
+      alamat_detail:
+        example: Jl. Diponegoro No. 25
+        type: string
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      desa:
+        example: Sidorejo Lor
+        type: string
+      gelar:
+        example: S.Pd.
+        type: string
+      id:
+        example: 1
+        type: integer
+      jenis_kelamin:
+        example: Laki-laki
+        type: string
+      kabupaten:
+        example: Salatiga
+        type: string
+      kecamatan:
+        example: Sidorejo
+        type: string
+      mapel_ids:
+        description: Virtual field for frontend multiselect checkboxes
+        example:
+        - 1
+        - 2
+        items:
+          type: integer
+        type: array
+      nama:
+        example: Ahmad Guru
+        type: string
+      nip:
+        example: GR001
+        type: string
+      no_hp:
+        example: "081234567890"
+        type: string
+      photo_url:
+        example: /uploads/profile/guru_1.jpg
+        type: string
+      provinsi:
+        description: Address Normalization Fields
+        example: Jawa Tengah
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      user_id:
+        example: 3
+        type: integer
+    type: object
+  model.GuruResponseCreated:
+    properties:
+      data:
+        $ref: '#/definitions/model.Guru'
+      message:
+        example: Guru berhasil ditambahkan
+        type: string
+      success:
+        example: true
+        type: boolean
+      temporary_password:
+        example: Guru123!
+        type: string
+    type: object
+  model.GuruResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Guru'
+        type: array
+      message:
+        example: Berhasil mengambil data guru
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.GuruResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Guru'
+      message:
+        example: Berhasil mengambil detail guru
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Jadwal:
+    properties:
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      guru:
+        $ref: '#/definitions/model.Guru'
+      guru_id:
+        example: 1
+        type: integer
+      hari:
+        example: Senin
+        type: string
+      id:
+        example: 1
+        type: integer
+      jam_mulai:
+        example: "07:00"
+        type: string
+      jam_selesai:
+        example: "09:00"
+        type: string
+      kelas:
+        $ref: '#/definitions/model.Kelas'
+      kelas_id:
+        example: 1
+        type: integer
+      mapel:
+        $ref: '#/definitions/model.Mapel'
+      mapel_id:
+        example: 1
+        type: integer
+      semester:
+        example: Ganjil
+        type: string
+      tahun_ajaran:
+        example: 2026/2027
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+    type: object
+  model.JadwalResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Jadwal'
+        type: array
+      message:
+        example: Berhasil mengambil data jadwal pelajaran
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.JadwalResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Jadwal'
+      message:
+        example: Berhasil mengambil detail jadwal pelajaran
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Kelas:
+    properties:
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      jurusan:
+        example: Rekayasa Perangkat Lunak
+        type: string
+      kapasitas:
+        example: 36
+        type: integer
+      nama_kelas:
+        example: X RPL 1
+        type: string
+      tingkat:
+        example: X
+        type: string
+      total_siswa:
+        example: 32
+        type: integer
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      wali_kelas:
+        $ref: '#/definitions/model.Guru'
+      wali_kelas_id:
+        example: 1
+        type: integer
+    type: object
+  model.KelasResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Kelas'
+        type: array
+      message:
+        example: Berhasil mengambil data kelas
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.KelasResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Kelas'
+      message:
+        example: Berhasil mengambil detail kelas
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.LoginData:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6ImFobWFkLmd1cnVAc2Vrb2xhaC5jb20iLCJyb2xlIjoiZ3VydSIsImV4cCI6MTcyMTE0MzQwMH0.xxxx
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.LoginSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.LoginData'
+      message:
+        example: Login berhasil
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Mapel:
+    properties:
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_umum:
+        example: true
+        type: boolean
+      jam:
+        example: 4
+        type: integer
+      jurusan:
+        example: Umum
+        type: string
+      kode_mapel:
+        example: MP001
+        type: string
+      nama_mapel:
+        example: Matematika
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+    type: object
+  model.MapelResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Mapel'
+        type: array
+      message:
+        example: Berhasil mengambil data mata pelajaran
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.MapelResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Mapel'
+      message:
+        example: Berhasil mengambil detail mata pelajaran
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Nilai:
+    properties:
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      grade_huruf:
+        example: A
+        type: string
+      guru:
+        $ref: '#/definitions/model.Guru'
+      guru_id:
+        example: 1
+        type: integer
+      id:
+        example: 1
+        type: integer
+      kelas:
+        $ref: '#/definitions/model.Kelas'
+      kelas_id:
+        example: 1
+        type: integer
+      mapel:
+        $ref: '#/definitions/model.Mapel'
+      mapel_id:
+        example: 1
+        type: integer
+      nilai_akhir:
+        example: 85.5
+        type: number
+      semester:
+        example: Ganjil
+        type: string
+      siswa:
+        $ref: '#/definitions/model.Siswa'
+      siswa_id:
+        example: 1
+        type: integer
+      tahun_ajaran:
+        example: 2026/2027
+        type: string
+      tugas:
+        example: 80
+        type: number
+      uas:
+        example: 90
+        type: number
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      uts:
+        example: 85
+        type: number
+    type: object
+  model.NilaiResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Nilai'
+        type: array
+      message:
+        example: Berhasil mengambil data nilai siswa
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.NilaiResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Nilai'
+      message:
+        example: Berhasil mengambil detail nilai siswa
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Perizinan:
+    properties:
+      alasan:
+        example: Ada keperluan keluarga
+        type: string
+      attachment_url:
+        example: /uploads/perizinan/sample.pdf
+        type: string
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      disetujui_oleh:
+        example: 1
+        type: integer
+      guru:
+        $ref: '#/definitions/model.Guru'
+      id:
+        example: 1
+        type: integer
+      keterangan_guru:
+        example: Semoga lekas sembuh/urusan lancar
+        type: string
+      siswa:
+        $ref: '#/definitions/model.Siswa'
+      siswa_id:
+        example: 1
+        type: integer
+      status:
+        description: '"Pending", "Disetujui", "Ditolak"'
+        example: Pending
+        type: string
+      tanggal_mulai:
+        example: "2026-07-15T00:00:00Z"
+        type: string
+      tanggal_selesai:
+        example: "2026-07-16T00:00:00Z"
+        type: string
+      tipe:
+        description: '"Izin" atau "Sakit"'
+        example: Izin
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+    type: object
+  model.PerizinanResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Perizinan'
+        type: array
+      message:
+        example: Berhasil mengambil data perizinan
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.PerizinanResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Perizinan'
+      message:
+        example: Berhasil mengambil detail perizinan
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.RegisterSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.User'
+      message:
+        example: Register berhasil
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.SchoolProfile:
+    properties:
+      academic_status:
+        example: "\U0001F7E2 Aktif"
+        type: string
+      academic_year:
+        example: 2026/2027
+        type: string
+      accreditation:
+        example: A (Sangat Baik)
+        type: string
+      address:
+        example: Jl. Diponegoro No. 25, Salatiga
+        type: string
+      appointment_period:
+        example: 2021 - 2027
+        type: string
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      current_semester:
+        example: Ganjil
+        type: string
+      curriculum:
+        example: Kurikulum Merdeka
+        type: string
+      email:
+        example: info@smkn1salatiga.sch.id
+        type: string
+      established_year:
+        example: "1965"
+        type: string
+      facilities:
+        example: Perpustakaan, Lab Komputer, Bengkel Kerja, Lapangan Olahraga
+        type: string
+      id:
+        example: 1
+        type: integer
+      level:
+        example: SMK / Sekolah Menengah Kejuruan
+        type: string
+      logo:
+        example: /uploads/profile/logo.png
+        type: string
+      mission:
+        example: |-
+          1. Menyelenggarakan pembelajaran berkualitas...
+          2. Membina budi pekerti luhur...
+        type: string
+      name:
+        example: SMK Negeri 1 Salatiga
+        type: string
+      npsn:
+        example: "20312345"
+        type: string
+      operational_status:
+        example: Aktif
+        type: string
+      phone:
+        example: (0298) 123456
+        type: string
+      postal_code:
+        example: "50711"
+        type: string
+      principal_name:
+        example: Drs. Hadi Santoso
+        type: string
+      principal_nip:
+        example: "197205121998031002"
+        type: string
+      principal_position:
+        example: Kepala Sekolah
+        type: string
+      school_type:
+        example: Sekolah Menengah Kejuruan (SMK)
+        type: string
+      shift:
+        example: Pagi
+        type: string
+      status:
+        example: Negeri
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      vision:
+        example: Menjadi lembaga pendidikan kejuruan yang unggul, berkarakter, dan
+          berdaya saing global.
+        type: string
+      website:
+        example: https://smkn1salatiga.sch.id
+        type: string
+    type: object
+  model.SchoolResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.SchoolProfile'
+      message:
+        example: Berhasil mengambil profil sekolah
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.Siswa:
+    properties:
+      alamat:
+        example: Jl. Diponegoro No. 25
+        type: string
+      alamat_detail:
+        example: Jl. Diponegoro No. 25
+        type: string
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      desa:
+        example: Sidorejo Lor
+        type: string
+      email:
+        example: budi.santoso@sekolah.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      jenis_kelamin:
+        example: Laki-laki
+        type: string
+      kabupaten:
+        example: Salatiga
+        type: string
+      kecamatan:
+        example: Sidorejo
+        type: string
+      kelas:
+        $ref: '#/definitions/model.Kelas'
+      kelas_id:
+        example: 1
+        type: integer
+      nama:
+        example: Budi Santoso
+        type: string
+      nis:
+        example: "12345678"
+        type: string
+      no_hp:
+        example: "081234567890"
+        type: string
+      photo_url:
+        example: /uploads/profile/siswa_1.jpg
+        type: string
+      provinsi:
+        description: Address Normalization Fields
+        example: Jawa Tengah
+        type: string
+      tanggal_lahir:
+        example: "2010-05-15"
+        type: string
+      tempat_lahir:
+        description: Deprecated Database Columns (Retained for Non-Destructive Migrations)
+        example: Salatiga
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      user_id:
+        example: 2
+        type: integer
+    type: object
+  model.SiswaResponseCreated:
+    properties:
+      data:
+        $ref: '#/definitions/model.Siswa'
+      message:
+        example: Siswa berhasil ditambahkan
+        type: string
+      success:
+        example: true
+        type: boolean
+      temporary_password:
+        example: Siswa123!
+        type: string
+    type: object
+  model.SiswaResponseList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Siswa'
+        type: array
+      message:
+        example: Berhasil mengambil data siswa
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.SiswaResponseSingle:
+    properties:
+      data:
+        $ref: '#/definitions/model.Siswa'
+      message:
+        example: Berhasil mengambil detail siswa
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.User:
+    properties:
+      alamat:
+        example: Jl. Diponegoro No. 25, Salatiga
+        type: string
+      created_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+      email:
+        example: ahmad.guru@sekolah.com
+        type: string
+      gelar:
+        example: S.Pd.
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      is_first_login:
+        example: true
+        type: boolean
+      jenis_kelamin:
+        example: Laki-laki
+        type: string
+      last_login_at:
+        type: string
+      nama:
+        example: Ahmad Guru
+        type: string
+      nip:
+        description: Ignored by GORM, populated for unified API login response
+        example: GR001
+        type: string
+      nis:
+        example: "12345678"
+        type: string
+      no_hp:
+        example: "081234567890"
+        type: string
+      role:
+        example: guru
+        type: string
+      updated_at:
+        example: "2026-07-15T19:00:00Z"
+        type: string
+    type: object
+  service.ChangePasswordInput:
+    properties:
+      new_password:
+        example: GuruNew123!
+        type: string
+      old_password:
+        example: Guru123!
+        type: string
+    type: object
+  service.LoginInput:
+    properties:
+      email:
+        example: admin@sekolah.com
+        type: string
+      identifier:
+        example: ADM001
+        type: string
+      password:
+        example: Admin123!
+        type: string
+    type: object
+  service.RegisterInput:
+    properties:
+      email:
+        example: ahmad.guru@sekolah.com
+        type: string
+      nama:
+        example: Ahmad Guru
+        type: string
+      password:
+        example: Guru123!
+        type: string
+      role:
+        example: guru
+        type: string
+    type: object
+host: 127.0.0.1:3000
+info:
+  contact:
+    email: praktikum@example.com
+    name: Praktikum Pemrograman III
+  description: Dokumentasi API backend Sistem Informasi Sekolah menggunakan Golang
+    Fiber, GORM, PostgreSQL, dan JWT.
+  title: API Sistem Informasi Sekolah
+  version: "1.0"
+paths:
+  /api/absensi/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data absensi. Dapat disaring berdasarkan kelas,
+        tanggal, status persetujuan, dan siswa. Route ini terproteksi jika diakses
+        via route ber-auth, namun absensiRoute juga didaftarkan sebagai publicAPI
+        di main.go.
+      parameters:
+      - description: Filter ID Kelas
+        in: query
+        name: kelas_id
+        type: string
+      - description: Filter Tanggal (YYYY-MM-DD)
+        in: query
+        name: tanggal
+        type: string
+      - description: Filter Status Persetujuan (e.g. Pending/Disetujui/Ditolak)
+        in: query
+        name: status_persetujuan
+        type: string
+      - description: Filter ID Siswa
+        in: query
+        name: siswa_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AbsensiResponseList'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Ambil semua data absensi
+      tags:
+      - Absensi
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data absensi baru atau mengajukan izin.
+      parameters:
+      - description: Payload data absensi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Absensi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.AbsensiResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Tambah data absensi / ajukan izin
+      tags:
+      - Absensi
+  /api/absensi/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data absensi berdasarkan ID.
+      parameters:
+      - description: ID Absensi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Hapus data absensi
+      tags:
+      - Absensi
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu absensi berdasarkan ID.
+      parameters:
+      - description: ID Absensi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AbsensiResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Ambil data absensi berdasarkan ID
+      tags:
+      - Absensi
+  /api/absensi/{id}/approve:
+    put:
+      consumes:
+      - application/json
+      description: Mengubah status persetujuan absensi (e.g. Disetujui/Ditolak).
+      parameters:
+      - description: ID Absensi
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload status persetujuan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ApproveRejectInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AbsensiResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Setujui atau tolak izin absensi
+      tags:
+      - Absensi
+  /api/absensi/bulk:
+    post:
+      consumes:
+      - application/json
+      description: Menyimpan atau memperbarui data absensi banyak siswa sekaligus
+        di suatu tanggal.
+      parameters:
+      - description: Payload bulk absensi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.BulkSaveInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Simpan absensi kelas secara bulk
+      tags:
+      - Absensi
+  /api/admin/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil statistik ringkas dashboard untuk role Admin (e.g. jumlah
+        guru, siswa, kelas, mapel).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data dashboard admin
+      tags:
+      - Dashboard
+  /api/auth/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Mengubah password user yang sedang login menggunakan token JWT.
+      parameters:
+      - description: Payload ubah password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.ChangePasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah password user
+      tags:
+      - Auth
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Melakukan autentikasi menggunakan Email/NIP/NIS/Username dan Password
+        untuk mendapatkan JWT token.
+      parameters:
+      - description: Payload login user
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.LoginSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Login user
+      tags:
+      - Auth
+  /api/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Mendaftarkan akun user baru (khusus untuk role guru). Pendaftaran
+        mandiri hanya diperbolehkan untuk role guru.
+      parameters:
+      - description: Payload register user
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.RegisterSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Register user baru
+      tags:
+      - Auth
+  /api/guru/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data guru. Mendukung parameter pencarian.
+      parameters:
+      - description: Cari berdasarkan nama atau NIP
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GuruResponseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data guru
+      tags:
+      - Guru
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data guru baru dan membuat user account dengan password
+        acak sementara.
+      parameters:
+      - description: Payload data guru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Guru'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GuruResponseCreated'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah data guru
+      tags:
+      - Guru
+  /api/guru/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data guru beserta user account terkait berdasarkan ID.
+        Hanya dapat diakses oleh Admin.
+      parameters:
+      - description: ID Guru
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus data guru
+      tags:
+      - Guru
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu guru berdasarkan ID.
+      parameters:
+      - description: ID Guru
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GuruResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data guru berdasarkan ID
+      tags:
+      - Guru
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data guru berdasarkan ID.
+      parameters:
+      - description: ID Guru
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload data guru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Guru'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GuruResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah data guru
+      tags:
+      - Guru
+  /api/guru/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil statistik ringkas dashboard untuk Guru (e.g. jadwal mengajar,
+        permohonan izin pending).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data dashboard guru
+      tags:
+      - Dashboard
+  /api/jadwal/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data jadwal pelajaran dengan berbagai filter
+        opsional.
+      parameters:
+      - description: Filter ID Kelas
+        in: query
+        name: kelas_id
+        type: string
+      - description: Filter ID Mapel
+        in: query
+        name: mapel_id
+        type: string
+      - description: Filter ID Guru
+        in: query
+        name: guru_id
+        type: string
+      - description: Filter Hari
+        in: query
+        name: hari
+        type: string
+      - description: Filter Tahun Ajaran (e.g. 2026/2027)
+        in: query
+        name: tahun_ajaran
+        type: string
+      - description: Filter Semester (e.g. Ganjil/Genap)
+        in: query
+        name: semester
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.JadwalResponseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data jadwal
+      tags:
+      - Jadwal
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data jadwal pelajaran baru.
+      parameters:
+      - description: Payload data jadwal
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Jadwal'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.JadwalResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah data jadwal
+      tags:
+      - Jadwal
+  /api/jadwal/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data jadwal pelajaran berdasarkan ID. Hanya dapat diakses
+        oleh Admin.
+      parameters:
+      - description: ID Jadwal
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus data jadwal
+      tags:
+      - Jadwal
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu jadwal pelajaran berdasarkan ID.
+      parameters:
+      - description: ID Jadwal
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.JadwalResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data jadwal berdasarkan ID
+      tags:
+      - Jadwal
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data jadwal pelajaran berdasarkan ID.
+      parameters:
+      - description: ID Jadwal
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload data jadwal
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Jadwal'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.JadwalResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah data jadwal
+      tags:
+      - Jadwal
+  /api/kelas/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data kelas. Mendukung pencarian nama kelas dan
+        filter tingkat.
+      parameters:
+      - description: Cari berdasarkan nama kelas
+        in: query
+        name: search
+        type: string
+      - description: Filter tingkat kelas (e.g. X, XI, XII)
+        in: query
+        name: tingkat
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.KelasResponseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data kelas
+      tags:
+      - Kelas
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data kelas baru.
+      parameters:
+      - description: Payload data kelas
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Kelas'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.KelasResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah data kelas
+      tags:
+      - Kelas
+  /api/kelas/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data kelas berdasarkan ID. Hanya dapat diakses oleh Admin.
+      parameters:
+      - description: ID Kelas
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus data kelas
+      tags:
+      - Kelas
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu kelas berdasarkan ID.
+      parameters:
+      - description: ID Kelas
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.KelasResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data kelas berdasarkan ID
+      tags:
+      - Kelas
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data kelas berdasarkan ID.
+      parameters:
+      - description: ID Kelas
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload data kelas
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Kelas'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.KelasResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah data kelas
+      tags:
+      - Kelas
+  /api/mapel/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data mata pelajaran. Mendukung pencarian.
+      parameters:
+      - description: Cari berdasarkan nama mapel atau kode
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MapelResponseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data mapel
+      tags:
+      - Mapel
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data mata pelajaran baru.
+      parameters:
+      - description: Payload data mapel
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Mapel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.MapelResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah data mapel
+      tags:
+      - Mapel
+  /api/mapel/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data mata pelajaran berdasarkan ID. Hanya dapat diakses
+        oleh Admin.
+      parameters:
+      - description: ID Mapel
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus data mapel
+      tags:
+      - Mapel
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu mata pelajaran berdasarkan ID.
+      parameters:
+      - description: ID Mapel
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MapelResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data mapel berdasarkan ID
+      tags:
+      - Mapel
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data mata pelajaran berdasarkan ID.
+      parameters:
+      - description: ID Mapel
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload data mapel
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Mapel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MapelResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah data mapel
+      tags:
+      - Mapel
+  /api/nilai/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data nilai siswa berdasarkan filter kelas, mapel,
+        siswa, dll. Guru hanya dapat melihat kelas/mapel yang diajarkannya, sedangkan
+        siswa hanya dapat melihat nilainya sendiri.
+      parameters:
+      - description: Filter ID Kelas
+        in: query
+        name: kelas_id
+        type: string
+      - description: Filter ID Mapel
+        in: query
+        name: mapel_id
+        type: string
+      - description: Filter ID Siswa
+        in: query
+        name: siswa_id
+        type: string
+      - description: Filter Tahun Ajaran (e.g. 2026/2027)
+        in: query
+        name: tahun_ajaran
+        type: string
+      - description: Filter Semester (e.g. Ganjil/Genap)
+        in: query
+        name: semester
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.NilaiResponseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data nilai
+      tags:
+      - Nilai
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data nilai baru untuk siswa. Hanya guru pengampu/wali
+        kelas/admin yang diijinkan mengisi nilai.
+      parameters:
+      - description: Payload data nilai
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Nilai'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.NilaiResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah data nilai
+      tags:
+      - Nilai
+  /api/nilai/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data nilai siswa berdasarkan ID. Hanya dapat dihapus
+        oleh Admin (RequireAdmin).
+      parameters:
+      - description: ID Nilai
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus data nilai
+      tags:
+      - Nilai
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu nilai berdasarkan ID.
+      parameters:
+      - description: ID Nilai
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.NilaiResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data nilai berdasarkan ID
+      tags:
+      - Nilai
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data nilai siswa berdasarkan ID. Hanya dapat diubah oleh
+        Guru pengampu atau Admin.
+      parameters:
+      - description: ID Nilai
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload data nilai
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Nilai'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.NilaiResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah data nilai
+      tags:
+      - Nilai
+  /api/perizinan/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data perizinan yang relevan bagi user yang sedang
+        login (siswa hanya melihat miliknya, guru melihat data kelasnya/seluruhnya).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PerizinanResponseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data perizinan
+      tags:
+      - Perizinan
+    post:
+      consumes:
+      - application/json
+      description: Mengajukan perizinan baru (misal izin sakit/keperluan keluarga)
+        untuk siswa.
+      parameters:
+      - description: Payload perizinan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Perizinan'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.PerizinanResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ajukan permohonan perizinan
+      tags:
+      - Perizinan
+  /api/perizinan/{id}/approve:
+    put:
+      consumes:
+      - application/json
+      description: Mengubah status persetujuan perizinan siswa. Hanya dapat dilakukan
+        oleh Guru.
+      parameters:
+      - description: ID Perizinan
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload persetujuan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ApproveRejectPerizinanInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PerizinanResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Setujui atau tolak permohonan perizinan
+      tags:
+      - Perizinan
+  /api/profile/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil informasi profil lengkap (Guru/Siswa/Admin) berdasarkan
+        JWT token yang dikirimkan.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil profil user yang sedang login
+      tags:
+      - Profile
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui data alamat normalization dan nomor HP profil (khusus
+        role Guru atau Siswa).
+      parameters:
+      - description: Payload perbaruan profil
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ProfileUpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Perbarui profil user yang sedang login
+      tags:
+      - Profile
+  /api/profile/photo:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Mengunggah berkas foto profil baru (Max 2MB, format JPG/JPEG/PNG)
+        untuk user (Guru/Siswa) yang sedang login.
+      parameters:
+      - description: Berkas gambar foto profil
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Unggah foto profil user
+      tags:
+      - Profile
+  /api/school-profile/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil informasi profil sekolah (ID=1). Jika belum ada di database,
+        akan mengembalikan profil default.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SchoolResponseSingle'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil profil sekolah
+      tags:
+      - School Profile
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui data profil sekolah (ID=1). Hanya dapat diakses oleh
+        Admin.
+      parameters:
+      - description: Payload profil sekolah
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SchoolProfile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SchoolResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Perbarui profil sekolah
+      tags:
+      - School Profile
+  /api/siswa:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data siswa. Mendukung parameter pencarian dan
+        filter kelas. Route ini dapat diakses secara publik, namun Guru/Wali Kelas
+        akan mendapatkan data terbatas sesuai kelas masing-masing jika login.
+      parameters:
+      - description: Cari berdasarkan nama atau NIS
+        in: query
+        name: search
+        type: string
+      - description: Filter berdasarkan ID kelas
+        in: query
+        name: kelas_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SiswaResponseList'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Ambil semua data siswa
+      tags:
+      - Siswa
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data siswa baru dan membuat user account dengan password
+        acak sementara. Hanya dapat diakses oleh user yang terautentikasi (JWT).
+      parameters:
+      - description: Payload data siswa
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Siswa'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SiswaResponseCreated'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah data siswa
+      tags:
+      - Siswa
+  /api/siswa/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data siswa beserta user account terkait berdasarkan ID.
+        Hanya dapat diakses oleh Admin (JWT + Admin role).
+      parameters:
+      - description: ID Siswa
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus data siswa
+      tags:
+      - Siswa
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail data satu siswa berdasarkan ID.
+      parameters:
+      - description: ID Siswa
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SiswaResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      summary: Ambil data siswa berdasarkan ID
+      tags:
+      - Siswa
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data siswa berdasarkan ID. Hanya dapat diakses oleh user
+        yang terautentikasi (JWT).
+      parameters:
+      - description: ID Siswa
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload data siswa
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Siswa'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SiswaResponseSingle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ubah data siswa
+      tags:
+      - Siswa
+  /api/siswa/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil statistik ringkas dashboard untuk Siswa (e.g. kelas,
+        nilai rata-rata, absensi, jadwal hari ini).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil data dashboard siswa
+      tags:
+      - Dashboard
+  /api/users/:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar seluruh user account (Admin, Guru, Siswa) beserta
+        nama asli dan identifier (NIP/NIS/Email). Hanya dapat diakses oleh Admin.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.UserResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Ambil semua data user account
+      tags:
+      - User Management
+  /api/users/{id}/reset-password:
+    put:
+      consumes:
+      - application/json
+      description: Mereset password user berdasarkan ID ke password default berdasarkan
+        role (e.g. Guru123! untuk guru, Siswa123! untuk siswa). Hanya dapat diakses
+        oleh Admin.
+      parameters:
+      - description: ID User
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Reset password user ke password default
+      tags:
+      - User Management
+  /api/users/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Mengaktifkan atau menonaktifkan user account berdasarkan ID. Hanya
+        dapat diakses oleh Admin. Administrator tidak dapat dinonaktifkan.
+      parameters:
+      - description: ID User
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payload status aktif
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateStatusInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/helpers.SwaggerSuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError400Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError401Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError403Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError404Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.SwaggerError500Response'
+      security:
+      - BearerAuth: []
+      summary: Perbarui status keaktifan user
+      tags:
+      - User Management
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

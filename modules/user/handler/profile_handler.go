@@ -16,15 +16,26 @@ import (
 )
 
 type ProfileUpdateInput struct {
-	NoHP         string `json:"no_hp"`
-	Provinsi     string `json:"provinsi"`
-	Kabupaten    string `json:"kabupaten"`
-	Kecamatan    string `json:"kecamatan"`
-	Desa         string `json:"desa"`
-	AlamatDetail string `json:"alamat_detail"`
+	NoHP         string `json:"no_hp" example:"081234567890"`
+	Provinsi     string `json:"provinsi" example:"Jawa Tengah"`
+	Kabupaten    string `json:"kabupaten" example:"Salatiga"`
+	Kecamatan    string `json:"kecamatan" example:"Sidorejo"`
+	Desa         string `json:"desa" example:"Sidorejo Lor"`
+	AlamatDetail string `json:"alamat_detail" example:"Jl. Diponegoro No. 25"`
 }
 
-// GetProfile returns the profile of the currently logged-in user
+// GetProfile godoc
+// @Summary Ambil profil user yang sedang login
+// @Description Mengambil informasi profil lengkap (Guru/Siswa/Admin) berdasarkan JWT token yang dikirimkan.
+// @Tags Profile
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/profile/ [get]
 func GetProfile(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)
 	role, okRole := c.Locals("role").(string)
@@ -123,7 +134,21 @@ func GetProfile(c *fiber.Ctx) error {
 	})
 }
 
-// UpdateProfile updates the profile of the currently logged-in user (Guru/Siswa)
+// UpdateProfile godoc
+// @Summary Perbarui profil user yang sedang login
+// @Description Memperbarui data alamat normalization dan nomor HP profil (khusus role Guru atau Siswa).
+// @Tags Profile
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body ProfileUpdateInput true "Payload perbaruan profil"
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/profile/ [put]
 func UpdateProfile(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)
 	role, okRole := c.Locals("role").(string)
@@ -177,7 +202,20 @@ func UpdateProfile(c *fiber.Ctx) error {
 	return helpers.ErrorResponse(c, fiber.StatusForbidden, "Role tidak diperbolehkan mengupdate profil")
 }
 
-// UploadProfilePhoto handles profile photo uploads and validations
+// UploadProfilePhoto godoc
+// @Summary Unggah foto profil user
+// @Description Mengunggah berkas foto profil baru (Max 2MB, format JPG/JPEG/PNG) untuk user (Guru/Siswa) yang sedang login.
+// @Tags Profile
+// @Security BearerAuth
+// @Accept mpfd
+// @Produce json
+// @Param photo formData file true "Berkas gambar foto profil"
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/profile/photo [post]
 func UploadProfilePhoto(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)
 	role, okRole := c.Locals("role").(string)

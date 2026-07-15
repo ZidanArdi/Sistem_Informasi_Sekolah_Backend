@@ -42,6 +42,18 @@ func sendError(c *fiber.Ctx, defaultCode int, err error) error {
 	})
 }
 
+// GetAdminDashboard godoc
+// @Summary Ambil data dashboard admin
+// @Description Mengambil statistik ringkas dashboard untuk role Admin (e.g. jumlah guru, siswa, kelas, mapel).
+// @Tags Dashboard
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/admin/dashboard [get]
 func GetAdminDashboard(c *fiber.Ctx) error {
 	userIDLocal := c.Locals("user_id")
 	if userIDLocal == nil {
@@ -70,6 +82,18 @@ func GetAdminDashboard(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil memuat dasbor admin", data)
 }
 
+// GetGuruDashboard godoc
+// @Summary Ambil data dashboard guru
+// @Description Mengambil statistik ringkas dashboard untuk Guru (e.g. jadwal mengajar, permohonan izin pending).
+// @Tags Dashboard
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/guru/dashboard [get]
 func GetGuruDashboard(c *fiber.Ctx) error {
 	teacherCtxLocal := c.Locals("teacher_context")
 	if teacherCtxLocal == nil {
@@ -105,6 +129,18 @@ func GetGuruDashboard(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil memuat dasbor guru", data)
 }
 
+// GetSiswaDashboard godoc
+// @Summary Ambil data dashboard siswa
+// @Description Mengambil statistik ringkas dashboard untuk Siswa (e.g. kelas, nilai rata-rata, absensi, jadwal hari ini).
+// @Tags Dashboard
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/siswa/dashboard [get]
 func GetSiswaDashboard(c *fiber.Ctx) error {
 	userIDLocal := c.Locals("user_id")
 	if userIDLocal == nil {
@@ -132,4 +168,3 @@ func GetSiswaDashboard(c *fiber.Ctx) error {
 
 	return helpers.SuccessResponse(c, "Berhasil memuat dasbor siswa", data)
 }
-

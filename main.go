@@ -18,14 +18,28 @@ import (
 	userRoute "backend/modules/user/route"
 	schoolRoute "backend/modules/school/route"
 
+	_ "backend/docs"
+
 	"io"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	swagger "github.com/gofiber/swagger"
 )
 
+// @title API Sistem Informasi Sekolah
+// @version 1.0
+// @description Dokumentasi API backend Sistem Informasi Sekolah menggunakan Golang Fiber, GORM, PostgreSQL, dan JWT.
+// @contact.name Praktikum Pemrograman III
+// @contact.email praktikum@example.com
+// @host 127.0.0.1:3000
+// @BasePath /
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 
 	// koneksi database
@@ -37,6 +51,9 @@ func main() {
 	app.Use(cors.New())
 	app.Use(logger.New())
 	app.Static("/uploads", "./uploads")
+
+	// Swagger UI route
+	app.Get("/docs/*", swagger.HandlerDefault)
 
 	// route
 	authRoute.AuthRoute(app)

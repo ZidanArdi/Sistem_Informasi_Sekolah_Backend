@@ -16,21 +16,21 @@ import (
 )
 
 type RegisterInput struct {
-	Nama     string `json:"nama"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Nama     string `json:"nama" example:"Ahmad Guru"`
+	Email    string `json:"email" example:"ahmad.guru@sekolah.com"`
+	Password string `json:"password" example:"Guru123!"`
+	Role     string `json:"role" example:"guru"`
 }
 
 type LoginInput struct {
-	Email      string `json:"email"`
-	Identifier string `json:"identifier"`
-	Password   string `json:"password"`
+	Email      string `json:"email" example:"admin@sekolah.com"`
+	Identifier string `json:"identifier" example:"ADM001"`
+	Password   string `json:"password" example:"Admin123!"`
 }
 
 type ChangePasswordInput struct {
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+	OldPassword string `json:"old_password" example:"Guru123!"`
+	NewPassword string `json:"new_password" example:"GuruNew123!"`
 }
 
 func Register(input RegisterInput) (model.User, error) {

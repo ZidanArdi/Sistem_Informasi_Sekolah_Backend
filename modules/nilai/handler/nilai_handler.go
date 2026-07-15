@@ -31,6 +31,22 @@ func getTeacherContext(c *fiber.Ctx) academicModel.TeacherContext {
 	return teacherCtx
 }
 
+// GetAllNilai godoc
+// @Summary Ambil semua data nilai
+// @Description Mengambil seluruh data nilai siswa berdasarkan filter kelas, mapel, siswa, dll. Guru hanya dapat melihat kelas/mapel yang diajarkannya, sedangkan siswa hanya dapat melihat nilainya sendiri.
+// @Tags Nilai
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param kelas_id query string false "Filter ID Kelas"
+// @Param mapel_id query string false "Filter ID Mapel"
+// @Param siswa_id query string false "Filter ID Siswa"
+// @Param tahun_ajaran query string false "Filter Tahun Ajaran (e.g. 2026/2027)"
+// @Param semester query string false "Filter Semester (e.g. Ganjil/Genap)"
+// @Success 200 {object} model.NilaiResponseList
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/nilai/ [get]
 func GetAllNilai(c *fiber.Ctx) error {
 	teacherCtx := getTeacherContext(c)
 	if teacherCtx.UserID == 0 {
@@ -51,6 +67,20 @@ func GetAllNilai(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil data nilai", data)
 }
 
+// GetNilaiByID godoc
+// @Summary Ambil data nilai berdasarkan ID
+// @Description Mengambil detail data satu nilai berdasarkan ID.
+// @Tags Nilai
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Nilai"
+// @Success 200 {object} model.NilaiResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/nilai/{id} [get]
 func GetNilaiByID(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -68,6 +98,19 @@ func GetNilaiByID(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Berhasil mengambil detail nilai", data)
 }
 
+// CreateNilai godoc
+// @Summary Tambah data nilai
+// @Description Menambahkan data nilai baru untuk siswa. Hanya guru pengampu/wali kelas/admin yang diijinkan mengisi nilai.
+// @Tags Nilai
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body model.Nilai true "Payload data nilai"
+// @Success 201 {object} model.NilaiResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/nilai/ [post]
 func CreateNilai(c *fiber.Ctx) error {
 	teacherCtx := getTeacherContext(c)
 	if teacherCtx.UserID == 0 {
@@ -91,6 +134,21 @@ func CreateNilai(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateNilai godoc
+// @Summary Ubah data nilai
+// @Description Mengubah data nilai siswa berdasarkan ID. Hanya dapat diubah oleh Guru pengampu atau Admin.
+// @Tags Nilai
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Nilai"
+// @Param request body model.Nilai true "Payload data nilai"
+// @Success 200 {object} model.NilaiResponseSingle
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/nilai/{id} [put]
 func UpdateNilai(c *fiber.Ctx) error {
 	teacherCtx := getTeacherContext(c)
 	if teacherCtx.UserID == 0 {
@@ -118,6 +176,21 @@ func UpdateNilai(c *fiber.Ctx) error {
 	return helpers.SuccessResponse(c, "Nilai berhasil diupdate", data)
 }
 
+// DeleteNilai godoc
+// @Summary Hapus data nilai
+// @Description Menghapus data nilai siswa berdasarkan ID. Hanya dapat dihapus oleh Admin (RequireAdmin).
+// @Tags Nilai
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Nilai"
+// @Success 200 {object} helpers.SwaggerSuccessResponse
+// @Failure 400 {object} helpers.SwaggerError400Response
+// @Failure 401 {object} helpers.SwaggerError401Response
+// @Failure 403 {object} helpers.SwaggerError403Response
+// @Failure 404 {object} helpers.SwaggerError404Response
+// @Failure 500 {object} helpers.SwaggerError500Response
+// @Router /api/nilai/{id} [delete]
 func DeleteNilai(c *fiber.Ctx) error {
 	teacherCtx := getTeacherContext(c)
 	if teacherCtx.UserID == 0 {
