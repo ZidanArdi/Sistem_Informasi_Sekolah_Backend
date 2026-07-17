@@ -26,11 +26,24 @@ func GetAllGuru(search string) ([]model.Guru, error) {
 		return nil, result.Error
 	}
 
-	for i := range guru {
-		var mapelIDs []uint
-		config.DB.Model(&model.GuruMapel{}).Where("guru_id = ?", guru[i].ID).Pluck("mapel_id", &mapelIDs)
-		guru[i].MapelIDs = mapelIDs
+	if len(guru) > 0 {
+		guruIDs := make([]uint, len(guru))
+		for i := range guru {
+			guruIDs[i] = guru[i].ID
+		}
+
+		var guruMapels []model.GuruMapel
+		if err := config.DB.Where("guru_id IN ?", guruIDs).Find(&guruMapels).Error; err == nil {
+			mapelMap := make(map[uint][]uint)
+			for _, gm := range guruMapels {
+				mapelMap[gm.GuruID] = append(mapelMap[gm.GuruID], gm.MapelID)
+			}
+			for i := range guru {
+				guru[i].MapelIDs = mapelMap[guru[i].ID]
+			}
+		}
 	}
+
 	return guru, nil
 }
 
