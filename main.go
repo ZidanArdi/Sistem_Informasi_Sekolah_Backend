@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"strings"
 
 	"backend/config"
 	"backend/middleware"
@@ -18,7 +20,7 @@ import (
 	userRoute "backend/modules/user/route"
 	schoolRoute "backend/modules/school/route"
 
-	_ "backend/docs"
+	"backend/docs"
 
 	"io"
 	"net/http"
@@ -42,13 +44,25 @@ import (
 // @name Authorization
 func main() {
 
+	// Swagger host configuration
+	swaggerHost := os.Getenv("SWAGGER_HOST")
+	if swaggerHost == "" {
+		swaggerHost = "127.0.0.1:3000"
+	}
+
+	docs.SwaggerInfo.Host = swaggerHost
+
 	// koneksi database
 	config.ConnectDB()
 
 	app := fiber.New()
 
 	// middleware
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: strings.Join(config.GetAllowedOrigins(), ", "),
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowMethods: "GET, POST, PUT, DELETE",
+	}))
 	app.Use(logger.New())
 	app.Static("/uploads", "./uploads")
 
