@@ -62,7 +62,7 @@ func main() {
 
 	// middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: strings.Join(config.GetAllowedOrigins(), ", "),
+		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		AllowMethods: "GET, POST, PUT, DELETE",
 	}))
