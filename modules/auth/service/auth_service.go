@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"backend/config"
 	"backend/helpers"
 	"backend/modules/auth/model"
 	"backend/modules/auth/repository"
@@ -71,44 +70,9 @@ func Login(input LoginInput) (model.User, string, error) {
 	}
 
 	loginID = strings.TrimSpace(loginID)
-	var user model.User
-	var err error
-
-	if strings.Contains(loginID, "@") {
-		// Email Login
-		user, err = repository.GetUserByEmail(strings.ToLower(loginID))
-		if err != nil {
-			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: email/ID Pengguna atau password salah")
-		}
-	} else if strings.HasPrefix(strings.ToUpper(loginID), "GR") {
-		// NIG Login (Guru)
-		var guru struct {
-			UserID uint `gorm:"column:user_id"`
-		}
-		errNIG := config.DB.Table("gurus").Select("user_id").Where("nip = ? AND deleted_at IS NULL", strings.ToUpper(loginID)).First(&guru).Error
-		if errNIG != nil {
-			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: NIG tidak terdaftar")
-		}
-		user, err = repository.GetUserByID(guru.UserID)
-		if err != nil {
-			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: akun guru tidak ditemukan")
-		}
-	} else if strings.ToUpper(loginID) == "ADM001" {
-		// Admin Code Login
-		user, err = repository.GetUserByEmail("admin@sekolah.com")
-		if err != nil {
-			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: akun admin tidak ditemukan")
-		}
-	} else {
-		// NIS Login (Siswa)
-		userID, _, errNIS := repository.GetUserIDByNIS(loginID)
-		if errNIS != nil {
-			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: NIS tidak terdaftar")
-		}
-		user, err = repository.GetUserByID(userID)
-		if err != nil {
-			return model.User{}, "", errors.New("ERR_INVALID_IDENTIFIER: akun siswa tidak ditemukan")
-		}
+	user, err := repository.FindLoginIdentity(loginID)
+	if err != nil {
+		return model.User{}, "", err
 	}
 
 	if !user.IsActive {
@@ -119,25 +83,14 @@ func Login(input LoginInput) (model.User, string, error) {
 		return model.User{}, "", errors.New("ERR_LOGIN_FAILED: email/ID Pengguna atau password salah")
 	}
 
-	// Dynamic first login / default password check
-	isDefaultPassword := false
-	if user.Role == "admin" && input.Password == "Admin123!" {
-		isDefaultPassword = true
-	} else if user.Role == "guru" && input.Password == "Guru123!" {
-		isDefaultPassword = true
-	} else if user.Role == "siswa" && input.Password == "Siswa123!" {
-		isDefaultPassword = true
-	}
+	// First login flag is fetched directly from database User.IsFirstLogin.
+	// It will be updated to false when the user changes their password via ChangePassword.
 
-	if isDefaultPassword {
-		user.IsFirstLogin = true
-		config.DB.Model(&model.User{}).Where("id = ?", user.ID).Update("is_first_login", true)
-	}
 
 	// Update last login timestamp
 	now := time.Now()
 	user.LastLoginAt = &now
-	config.DB.Model(&model.User{}).Where("id = ?", user.ID).Update("last_login_at", &now)
+	repository.UpdateLastLogin(user.ID, &now)
 
 	var emailStr string
 	if user.Email != nil {
@@ -153,20 +106,7 @@ func Login(input LoginInput) (model.User, string, error) {
 
 	// Populate profile details based on role
 	if user.Role == "siswa" {
-		var siswa struct {
-			NIS          string
-			NoHP         string
-			JenisKelamin string
-			Provinsi     string
-			Kabupaten    string
-			Kecamatan    string
-			Desa         string
-			AlamatDetail string
-		}
-		config.DB.Table("siswas").
-			Select("nis, no_hp, jenis_kelamin, provinsi, kabupaten, kecamatan, desa, alamat_detail").
-			Where("user_id = ?", user.ID).
-			Scan(&siswa)
+		siswa, _ := repository.GetSiswaProfileByUserID(user.ID)
 		user.NIS = siswa.NIS
 		user.NoHP = siswa.NoHP
 		user.JenisKelamin = siswa.JenisKelamin
@@ -174,21 +114,7 @@ func Login(input LoginInput) (model.User, string, error) {
 			user.Alamat = fmt.Sprintf("%s, %s, %s, %s, %s", siswa.AlamatDetail, siswa.Desa, siswa.Kecamatan, siswa.Kabupaten, siswa.Provinsi)
 		}
 	} else if user.Role == "guru" {
-		var guru struct {
-			NIP          string
-			Gelar        string
-			NoHP         string
-			JenisKelamin string
-			Provinsi     string
-			Kabupaten    string
-			Kecamatan    string
-			Desa         string
-			AlamatDetail string
-		}
-		config.DB.Table("gurus").
-			Select("nip, gelar, no_hp, jenis_kelamin, provinsi, kabupaten, kecamatan, desa, alamat_detail").
-			Where("user_id = ?", user.ID).
-			Scan(&guru)
+		guru, _ := repository.GetGuruProfileByUserID(user.ID)
 		user.NIP = guru.NIP
 		user.Gelar = guru.Gelar
 		user.NoHP = guru.NoHP
@@ -201,11 +127,13 @@ func Login(input LoginInput) (model.User, string, error) {
 	// LOG Login Info
 	var resolvedIdentifier string
 	if user.Role == "admin" {
-		resolvedIdentifier = "ADM001"
+		resolvedIdentifier = user.Nama
 	} else if user.Role == "guru" {
-		resolvedIdentifier = user.NIP
+		nip, _ := repository.GetGuruNIPByUserID(user.ID)
+		resolvedIdentifier = nip
 	} else {
-		resolvedIdentifier = user.NIS
+		nis, _ := repository.GetSiswaNISByUserID(user.ID)
+		resolvedIdentifier = nis
 	}
 	log.Printf("[INFO] Action: Login | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), user.Nama, resolvedIdentifier, emailStr)
 
@@ -274,14 +202,12 @@ func ChangePassword(userID uint, input ChangePasswordInput) error {
 	}
 
 	if user.Role == "admin" {
-		resolvedIdentifier = "ADM001"
+		resolvedIdentifier = user.Nama
 	} else if user.Role == "guru" {
-		var nip string
-		config.DB.Table("gurus").Select("nip").Where("user_id = ?", user.ID).Row().Scan(&nip)
+		nip, _ := repository.GetGuruNIPByUserID(user.ID)
 		resolvedIdentifier = nip
 	} else {
-		var nis string
-		config.DB.Table("siswas").Select("nis").Where("user_id = ?", user.ID).Row().Scan(&nis)
+		nis, _ := repository.GetSiswaNISByUserID(user.ID)
 		resolvedIdentifier = nis
 	}
 	log.Printf("[INFO] Action: Password Changed | Timestamp: %s | User: %s | Identifier: %s | Email: %s", time.Now().Format(time.RFC3339), user.Nama, resolvedIdentifier, emailStr)
