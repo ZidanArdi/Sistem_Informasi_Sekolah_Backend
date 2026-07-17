@@ -28,7 +28,7 @@ func ConnectDB() {
 	err := godotenv.Overload()
 
 	if err != nil {
-		log.Fatal("Gagal load .env")
+		log.Println("Info: .env file tidak ditemukan, menggunakan environment variables dari sistem")
 	}
 
 	dsn := os.Getenv("DATABASE_URL")

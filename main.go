@@ -49,6 +49,9 @@ func main() {
 	if swaggerHost == "" {
 		swaggerHost = "127.0.0.1:3000"
 	}
+	
+	swaggerHost = strings.TrimPrefix(swaggerHost, "https://")
+	swaggerHost = strings.TrimPrefix(swaggerHost, "http://")
 
 	docs.SwaggerInfo.Host = swaggerHost
 
