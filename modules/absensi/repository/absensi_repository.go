@@ -12,7 +12,8 @@ import (
 func GetAllAbsensi(kelasID string, tanggal string, statusPersetujuan string, siswaID uint) ([]model.Absensi, error) {
 	var absensiList []model.Absensi
 
-	query := config.DB.Preload("Siswa").Preload("Siswa.Kelas")
+	query := config.DB.Preload("Siswa").Preload("Siswa.Kelas").
+		Joins("JOIN siswas ON siswas.id = absensi.siswa_id AND siswas.deleted_at IS NULL")
 
 	if siswaID != 0 {
 		query = query.Where("siswa_id = ?", siswaID)
@@ -28,8 +29,7 @@ func GetAllAbsensi(kelasID string, tanggal string, statusPersetujuan string, sis
 
 	if kelasID != "" {
 		if parsedKelasID, err := strconv.Atoi(kelasID); err == nil {
-			// Join with siswa table to filter by kelas_id
-			query = query.Joins("JOIN siswa ON siswa.id = absensi.siswa_id").Where("siswa.kelas_id = ?", parsedKelasID)
+			query = query.Where("siswas.kelas_id = ?", parsedKelasID)
 		}
 	}
 

@@ -12,7 +12,8 @@ import (
 func GetAllNilai(siswaID string, kelasID string, mapelID string, semester string, tahunAjaran string) ([]model.Nilai, error) {
 	var nilai []model.Nilai
 
-	query := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Mapel").Preload("Guru").Preload("Kelas")
+	query := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Mapel").Preload("Guru").Preload("Kelas").
+		Joins("JOIN siswas ON siswas.id = nilais.siswa_id AND siswas.deleted_at IS NULL")
 	if siswaID != "" {
 		if parsed, err := strconv.Atoi(siswaID); err == nil {
 			query = query.Where("siswa_id = ?", parsed)

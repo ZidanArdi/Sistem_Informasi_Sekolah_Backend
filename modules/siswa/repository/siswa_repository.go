@@ -1,12 +1,17 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"strconv"
 
 	"backend/config"
+	absensiModel "backend/modules/absensi/model"
 	authModel "backend/modules/auth/model"
 	kelasModel "backend/modules/kelas/model"
+	nilaiModel "backend/modules/nilai/model"
+	perizinanModel "backend/modules/perizinan/model"
 	"backend/modules/siswa/model"
 
 	"gorm.io/gorm"
@@ -73,12 +78,65 @@ func UpdateSiswa(id uint, data model.Siswa) (model.Siswa, error) {
 	return siswa, nil
 }
 
+func DeleteStudentRelations(tx *gorm.DB, siswaID uint) error {
+	log.Printf("[Delete Student] Deleting Nilai for Siswa ID: %d", siswaID)
+	if err := tx.Unscoped().Where("siswa_id = ?", siswaID).Delete(&nilaiModel.Nilai{}).Error; err != nil {
+		return err
+	}
+
+	log.Printf("[Delete Student] Deleting Absensi for Siswa ID: %d", siswaID)
+	if err := tx.Unscoped().Where("siswa_id = ?", siswaID).Delete(&absensiModel.Absensi{}).Error; err != nil {
+		return err
+	}
+
+	log.Printf("[Delete Student] Deleting Perizinan for Siswa ID: %d", siswaID)
+	if err := tx.Unscoped().Where("siswa_id = ?", siswaID).Delete(&perizinanModel.Perizinan{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteSiswa(id uint) error {
 	var siswa model.Siswa
 	if err := config.DB.First(&siswa, id).Error; err != nil {
 		return err
 	}
-	return config.DB.Delete(&siswa).Error
+
+	if siswa.UserID == 0 {
+		return errors.New("data siswa tidak valid")
+	}
+
+	// Verify user exists
+	var user authModel.User
+	if err := config.DB.First(&user, siswa.UserID).Error; err != nil {
+		return errors.New("user tidak ditemukan")
+	}
+
+	tx := config.DB.Begin()
+
+	if err := DeleteStudentRelations(tx, id); err != nil {
+		log.Printf("[Delete Student] Error in relations deletion, Rollback: %v", err)
+		tx.Rollback()
+		return err
+	}
+
+	log.Printf("[Delete Student] Deleting Siswa ID: %d", id)
+	if err := tx.Unscoped().Delete(&siswa).Error; err != nil {
+		log.Printf("[Delete Student] Error in Siswa deletion, Rollback: %v", err)
+		tx.Rollback()
+		return err
+	}
+
+	log.Printf("[Delete Student] Deleting User ID: %d", siswa.UserID)
+	if err := tx.Unscoped().Where("id = ?", siswa.UserID).Delete(&authModel.User{}).Error; err != nil {
+		log.Printf("[Delete Student] Error in User deletion, Rollback: %v", err)
+		tx.Rollback()
+		return err
+	}
+
+	log.Printf("[Delete Student] Commit successful")
+	return tx.Commit().Error
 }
 
 func GenerateNISWithTx(tx *gorm.DB) (string, error) {

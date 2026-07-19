@@ -26,19 +26,25 @@ func GetPerizinanByID(id uint) (model.Perizinan, error) {
 
 func GetAllPerizinan() ([]model.Perizinan, error) {
 	var list []model.Perizinan
-	result := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Guru").Order("created_at desc").Find(&list)
+	result := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Guru").
+		Joins("JOIN siswas ON siswas.id = perizinan.siswa_id AND siswas.deleted_at IS NULL").
+		Order("perizinan.created_at desc").Find(&list)
 	return list, result.Error
 }
 
 func GetPerizinanBySiswaID(siswaID uint) ([]model.Perizinan, error) {
 	var list []model.Perizinan
-	result := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Guru").Where("siswa_id = ?", siswaID).Order("created_at desc").Find(&list)
+	result := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Guru").
+		Joins("JOIN siswas ON siswas.id = perizinan.siswa_id AND siswas.deleted_at IS NULL").
+		Where("perizinan.siswa_id = ?", siswaID).Order("perizinan.created_at desc").Find(&list)
 	return list, result.Error
 }
 
 func GetPendingPerizinan() ([]model.Perizinan, error) {
 	var list []model.Perizinan
-	result := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Guru").Where("status = ?", "Pending").Order("created_at desc").Find(&list)
+	result := config.DB.Preload("Siswa").Preload("Siswa.Kelas").Preload("Guru").
+		Joins("JOIN siswas ON siswas.id = perizinan.siswa_id AND siswas.deleted_at IS NULL").
+		Where("perizinan.status = ?", "Pending").Order("perizinan.created_at desc").Find(&list)
 	return list, result.Error
 }
 

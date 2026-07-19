@@ -202,9 +202,12 @@ func DeleteSiswa(c *fiber.Ctx) error {
 
 	if err != nil {
 		if repository.IsNotFoundError(err) {
-			return helpers.ErrorResponse(c, 404, "Siswa tidak ditemukan")
+			return helpers.ErrorResponse(c, 404, "Siswa tidak ditemukan.")
 		}
-		return helpers.ErrorResponse(c, 500, "Gagal menghapus siswa")
+		if err.Error() == "data siswa tidak valid" || err.Error() == "user tidak ditemukan" {
+			return helpers.ErrorResponse(c, 400, "Data siswa tidak valid.")
+		}
+		return helpers.ErrorResponse(c, 500, "Terjadi kesalahan saat menghapus data siswa.")
 	}
 
 	return helpers.SuccessResponse(c, "Siswa berhasil dihapus", nil)
