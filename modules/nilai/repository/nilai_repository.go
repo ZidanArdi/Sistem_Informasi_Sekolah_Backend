@@ -16,24 +16,24 @@ func GetAllNilai(siswaID string, kelasID string, mapelID string, semester string
 		Joins("JOIN siswas ON siswas.id = nilais.siswa_id AND siswas.deleted_at IS NULL")
 	if siswaID != "" {
 		if parsed, err := strconv.Atoi(siswaID); err == nil {
-			query = query.Where("siswa_id = ?", parsed)
+			query = query.Where("nilais.siswa_id = ?", parsed)
 		}
 	}
 	if kelasID != "" {
 		if parsed, err := strconv.Atoi(kelasID); err == nil {
-			query = query.Where("kelas_id = ?", parsed)
+			query = query.Where("nilais.kelas_id = ?", parsed)
 		}
 	}
 	if mapelID != "" {
 		if parsed, err := strconv.Atoi(mapelID); err == nil {
-			query = query.Where("mapel_id = ?", parsed)
+			query = query.Where("nilais.mapel_id = ?", parsed)
 		}
 	}
 	if semester != "" {
-		query = query.Where("semester = ?", semester)
+		query = query.Where("nilais.semester = ?", semester)
 	}
 	if tahunAjaran != "" {
-		query = query.Where("tahun_ajaran = ?", tahunAjaran)
+		query = query.Where("nilais.tahun_ajaran = ?", tahunAjaran)
 	}
 
 	result := query.Find(&nilai)
@@ -99,7 +99,7 @@ func GetSiswaKelasID(siswaID uint) (uint, error) {
 	var siswa struct {
 		KelasID uint
 	}
-	err := config.DB.Table("siswas").Select("kelas_id").Where("id = ? AND deleted_at IS NULL", siswaID).Scan(&siswa).Error
+	err := config.DB.Table("siswas").Select("siswas.kelas_id").Where("siswas.id = ? AND siswas.deleted_at IS NULL", siswaID).Scan(&siswa).Error
 	if err != nil || siswa.KelasID == 0 {
 		return 0, gorm.ErrRecordNotFound
 	}
@@ -108,7 +108,7 @@ func GetSiswaKelasID(siswaID uint) (uint, error) {
 
 func CheckExistingNilai(siswaID, mapelID uint, semester, tahunAjaran string) (model.Nilai, error) {
 	var existing model.Nilai
-	err := config.DB.Where("siswa_id = ? AND mapel_id = ? AND semester = ? AND tahun_ajaran = ?",
+	err := config.DB.Where("nilais.siswa_id = ? AND nilais.mapel_id = ? AND nilais.semester = ? AND nilais.tahun_ajaran = ?",
 		siswaID, mapelID, semester, tahunAjaran).First(&existing).Error
 	return existing, err
 }
@@ -117,7 +117,7 @@ func GetSiswaIDByUserID(userID uint) (uint, error) {
 	var siswa struct {
 		ID uint
 	}
-	err := config.DB.Table("siswas").Select("id").Where("user_id = ?", userID).Scan(&siswa).Error
+	err := config.DB.Table("siswas").Select("siswas.id").Where("siswas.user_id = ?", userID).Scan(&siswa).Error
 	return siswa.ID, err
 }
 

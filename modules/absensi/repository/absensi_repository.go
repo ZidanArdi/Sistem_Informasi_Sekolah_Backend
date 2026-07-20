@@ -16,15 +16,15 @@ func GetAllAbsensi(kelasID string, tanggal string, statusPersetujuan string, sis
 		Joins("JOIN siswas ON siswas.id = absensi.siswa_id AND siswas.deleted_at IS NULL")
 
 	if siswaID != 0 {
-		query = query.Where("siswa_id = ?", siswaID)
+		query = query.Where("absensi.siswa_id = ?", siswaID)
 	}
 
 	if tanggal != "" {
-		query = query.Where("tanggal = ?", tanggal)
+		query = query.Where("absensi.tanggal = ?", tanggal)
 	}
 
 	if statusPersetujuan != "" {
-		query = query.Where("status_persetujuan = ?", statusPersetujuan)
+		query = query.Where("absensi.status_persetujuan = ?", statusPersetujuan)
 	}
 
 	if kelasID != "" {
@@ -33,7 +33,7 @@ func GetAllAbsensi(kelasID string, tanggal string, statusPersetujuan string, sis
 		}
 	}
 
-	result := query.Order("tanggal desc, id desc").Find(&absensiList)
+	result := query.Order("absensi.tanggal desc, absensi.id desc").Find(&absensiList)
 	return absensiList, result.Error
 }
 
